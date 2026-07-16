@@ -1,0 +1,154 @@
+[
+{
+                "name": "Ventilator",
+                "brand": "Carefusion",
+                "model": "N/A",
+                "loc": "RESPI",
+                "sn": "BJT01646",
+                "service": "Repair"
+        },
+        {
+                "name": "Ventilator",
+                "brand": "Carefusion",
+                "model": "N/A",
+                "loc": "Respi",
+                "sn": "BJT01075",
+                "service": "Repair"
+        },
+        {
+                "name": "Ventilator",
+                "brand": "Mindray",
+                "model": "SV300",
+                "loc": "Respi",
+                "sn": "GB-08029647",
+                "service": "Repair"
+        },
+        {
+                "name": "Ventilator",
+                "brand": "Tecme",
+                "model": "N/A",
+                "loc": "Respi",
+                "sn": "210740201083A1V",
+                "service": "Repair"
+        },
+        {
+                "name": "Patient Monitor",
+                "brand": "Edan",
+                "model": "iM70",
+                "loc": "Respi",
+                "sn": "360080-M18112130015",
+                "service": "Calibration"
+        },
+        {
+                "name": "ECG",
+                "brand": "WELCHALLYN",
+                "model": "CP150",
+                "loc": "GHA",
+                "sn": "1100018012223",
+                "service": "Calibration"
+        },
+        {
+                "name": "REF",
+                "brand": "Haier",
+                "model": "HYC-940",
+                "loc": "2ND FLOOR LAB",
+                "sn": "BEO3LSEONO0QJN9Z0001",
+                "service": "Calibration"
+        },
+        {
+                "name": "PATUENT MONITOR",
+                "brand": "Bionet",
+                "model": "BM7",
+                "loc": "PEDIA",
+                "sn": "622B84",
+                "service": "Calibration"
+        },
+        {
+                "name": "Maternal Monitor",
+                "brand": "EDAN",
+                "model": "F9E",
+                "loc": "OB WARD",
+                "sn": "560039M24713190003",
+                "service": "Calibration"
+        },
+        {
+                "name": "PATIENT MONITOR",
+                "brand": "BIONET",
+                "model": "BM7",
+                "loc": "OB WARD",
+                "sn": "DL0700180",
+                "service": "Calibration"
+        },
+        {
+                "name": "PULSE OXIMTER",
+                "brand": "ChoiceMed",
+                "model": "MD300M",
+                "loc": "ER",
+                "sn": "240900200569",
+                "service": "Calibration"
+        },
+        {
+                "name": "Ventilator",
+                "brand": "MIDRAY",
+                "model": "SV300",
+                "loc": "ER",
+                "sn": "GB3C078376",
+                "service": "Calibration"
+        },
+        {
+                "name": "VENTILATOR",
+                "brand": "MINDRAY",
+                "model": "SV300",
+                "loc": "ER",
+                "sn": "GB5C094359",
+                "service": "Repair"
+        },
+        {
+                "name": "Pulse Oximeter",
+                "brand": "Armstrong Medical",
+                "model": "N/A",
+                "loc": "RESPI",
+                "sn": "714385209",
+                "service": "Calibration"
+        },
+        {
+                "name": "ECG MACHINE",
+                "brand": "WelchAllyn",
+                "model": "N/A",
+                "loc": "Respi",
+                "sn": "10002333382",
+                "service": "Calibration"
+        },
+        {
+                "name": "ECG MACHINE",
+                "brand": "WelchAllyn",
+                "model": "N/A",
+                "loc": "GHA",
+                "sn": "1100018012223",
+                "service": "Calibration"
+        },
+        {
+                "name": "Pharma Ref",
+                "brand": "BIOBASE",
+                "model": "N/A",
+                "loc": "PHARMACY",
+                "sn": "G1701004006BXC-V650M",
+                "service": "Calibration"
+        },
+        {
+                "name": "Defibrillator",
+                "brand": "LifePak20e",
+                "model": "N/A",
+                "loc": "Pedia",
+                "sn": "477446103",
+                "service": "Calibration"
+        },
+        {
+                "name": "PULSE OXIMETER",
+                "brand": "MASIMO",
+                "model": "N/A",
+                "loc": "ER",
+                "sn": "600015566",
+                "service": "Calibration"
+        }
+    ]
