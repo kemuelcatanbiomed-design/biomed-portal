@@ -163,7 +163,7 @@
                 <button type="submit" class="btn btn-add">✚ Add to List</button>
                 <button type="button" onclick="printReport()" class="btn btn-print">🖨️ Save/Print PDF</button>
                 <button type="button" onclick="triggerPdfImport()" class="btn btn-import">📥 Import PDF File</button>
-                <button type="button" onclick="exportUpdatedCodeFile()" class="btn btn-export">💾 Export HTML File</button>
+                <button type="button" onclick="exportLocalJson()" class="btn btn-export">💾 Export data.json</button>
                 <button type="button" onclick="clearList()" class="btn btn-clear">🧹 Clear List</button>
             </div>
             <!-- Hidden file input to upload the PDF file -->
@@ -173,7 +173,7 @@
 
     <!-- Real-time Status Indicator -->
     <div class="sync-status-wrapper">
-        <span id="syncStatus" style="color: var(--primary);">⏳ Auto-syncing updates directly to GitHub...</span>
+        <span id="syncStatus"></span>
     </div>
 
     <h3>Equipment Queue</h3>
@@ -202,213 +202,56 @@
 
     <!-- The Hidden Metadata Container -->
     <div id="pdfDataBlock" class="pdf-metadata">
-        DATA_BEGINS_HERE:<span id="dataPayload">W3sibmFtZSI6IlZlbnRpbGF0b3IiLCJicmFuZCI6IkNhcmVmdXNpb24iLCJtb2RlbCI6Ik4vQSIsImxvYyI6IlJFU1BJIiwic24iOiJCSlQwMTY0NiIsInNlcnZpY2UiOiJSZXBhaXIifSx7Im5hbWUiOiJWZW50aWxhdG9yIiwiYnJhbmQiOiJDYXJlZnVzaW9uIiwibW9kZWwiOiJOL0EiLCJsb2MiOiJSZXNwaSIsInNuIjoiQkpUMDEwNzUiLCJzZXJ2aWNlIjoiUmVwYWlyIn0seyJuYW1lIjoiVmVudGlsYXRvciIsImJyYW5kIjoiTWluZHJheSIsIm1vZGVsIjoiU1YzMDAiLCJsb2MiOiJSZXNwaSIsInNuIjoiR0ItMDgwMjk2NDciLCJzZXJ2aWNlIjoiUmVwYWlyIn0seyJuYW1lIjoiVmVudGlsYXRvciIsImJyYW5kIjoiVGVjbWUiLCJtb2RlbCI6Ik4vQSIsImxvYyI6IlJlc3BpIiwic24iOiIyMTA3NDAyMDEwODNBMVYiLCJzZXJ2aWNlIjoiUmVwYWlyIn0seyJuYW1lIjoiUGF0aWVudCBNb25pdG9yIiwiYnJhbmQiOiJFZGFuIiwibW9kZWwiOiJpTTcwIiwibG9jIjoiUmVzcGkiLCJzbiI6IjM2MDA4MC1NMTgxMTIxMzAwMTUiLCJzZXJ2aWNlIjoiQ2FsaWJyYXRpb24ifSx7Im5hbWUiOiJFQ0ciLCJicmFuZCI6IldFTENIQUxMWU4iLCJtb2RlbCI6IkNQMTUwIiwibG9jIjoiR0hBIiwic24iOiIxMTAwMDE4MDEyMjIzIiwic2VydmljZSI6IkNhbGlicmF0aW9uIn0seyJuYW1lIjoiUkVGIiwiYnJhbmQiOiJIYWllciIsIm1vZGVsIjoiSFlDLTk0MCIsImxvYyI6IjJORCBGTE9PUiBMQUIiLCJzbiI6IkJFTzNMU0VPTk8wUUpOOVowMDAxIiwic2VydmljZSI6IkNhbGlicmF0aW9uIn0seyJuYW1lIjoiUEFUVUVOVCBNT05JVE9SIiwiYnJhbmQiOiJCaW9uZXQiLCJtb2RlbCI6IkJNNyIsImxvYyI6IlBFRElBIiwic24iOiI2MjJCODQiLCJzZXJ2aWNlIjoiQ2FsaWJyYXRpb24ifSx7Im5hbWUiOiJNYXRlcm5hbCBNb25pdG9yIiwiYnJhbmQiOiJFREFOIiwibW9kZWwiOiJGOUUiLCJsb2MiOiJPQiBXQVJEIiwic24iOiI1NjAwMzlNMjQ3MTMxOTAwMDMiLCJzZXJ2aWNlIjoiQ2FsaWJyYXRpb24ifSx7Im5hbWUiOiJQQVRJRU5UIE1PTklUT1IiLCJicmFuZCI6IkJJT05FVCIsIm1vZGVsIjoiQk03IiwibG9jIjoiT0IgV0FSRCIsInNuIjoiREwwNzAwMTgwIiwic2VydmljZSI6IkNhbGlicmF0aW9uIn0seyJuYW1lIjoiUFVMU0UgT1hJTVRFUiIsImJyYW5kIjoiQ2hvaWNlTWVkIiwibW9kZWwiOiJNRDMwME0iLCJsb2MiOiJFUiIsInNuIjoiMjQwOTAwMjAwNTY5Iiwic2VydmljZSI6IkNhbGlicmF0aW9uIn0seyJuYW1lIjoiVmVudGlsYXRvciIsImJyYW5kIjoiTUlEUkFZIiwibW9kZWwiOiJTVjMwMCIsImxvYyI6IkVSIiwic24iOiJHQjNDMDc4Mzc2Iiwic2VydmljZSI6IkNhbGlicmF0aW9uIn0seyJuYW1lIjoiVkVOVElMQVRPUiIsImJyYW5kIjoiTUlORFJBWSIsIm1vZGVsIjoiU1YzMDAiLCJsb2MiOiJFUiIsInNuIjoiR0I1QzA5NDM1OSIsInNlcnZpY2UiOiJSZXBhaXIifSx7Im5hbWUiOiJQdWxzZSBPeGltZXRlciIsImJyYW5kIjoiQXJtc3Ryb25nIE1lZGljYWwiLCJtb2RlbCI6Ik4vQSIsImxvYyI6IlJFU1BJIiwic24iOiI3MTQzODUyMDkiLCJzZXJ2aWNlIjoiQ2FsaWJyYXRpb24ifSx7Im5hbWUiOiJFQ0cgTUFDSElORSIsImJyYW5kIjoiV2VsY2hBbGx5biIsIm1vZGVsIjoiTi9BIiwibG9jIjoiUmVzcGkiLCJzbiI6IjEwMDAyMzMzMzgyIiwic2VydmljZSI6IkNhbGlicmF0aW9uIn0seyJuYW1lIjoiRUNHIE1BQ0hJTkUiLCJicmFuZCI6IldlbGNoQWxseW4iLCJtb2RlbCI6Ik4vQSIsImxvYyI6IkdIQSIsInNuIjoiMTEwMDAxODAxMjIyMyIsInNlcnZpY2UiOiJDYWxpYnJhdGlvbiJ9LHsibmFtZSI6IlBoYXJtYSBSZWYiLCJicmFuZCI6IkJJT0JBU0UiLCJtb2RlbCI6Ik4vQSIsImxvYyI6IlBIQVJNQUNZIiwic24iOiJHMTcwMTAwNDAwNkJYQy1WNjUwTSIsInNlcnZpY2UiOiJDYWxpYnJhdGlvbiJ9LHsibmFtZSI6IkRlZmlicmlsbGF0b3IiLCJicmFuZCI6IkxpZmVQYWsyMGUiLCJtb2RlbCI6Ik4vQSIsImxvYyI6IlBlZGlhIiwic24iOiI0Nzc0NDYxMDMiLCJzZXJ2aWNlIjoiQ2FsaWJyYXRpb24ifSx7Im5hbWUiOiJQVUxTRSBPWElNRVRFUiIsImJyYW5kIjoiTUFTSU1PIiwibW9kZWwiOiJOL0EiLCJsb2MiOiJFUiIsInNuIjoiNjAwMDE1NTY2Iiwic2VydmljZSI6IkNhbGlicmF0aW9uIn0seyJuYW1lIjoic2RzIiwiYnJhbmQiOiJzc2QiLCJtb2RlbCI6InNkc2QiLCJsb2MiOiJzZHMiLCJzbiI6InNkc2QiLCJzZXJ2aWNlIjoiQ2FsaWJyYXRpb24ifSx7Im5hbWUiOiJ2IiwiYnJhbmQiOiJ2IiwibW9kZWwiOiJ2IiwibG9jIjoidiIsInNuIjoidiIsInNlcnZpY2UiOiJDYWxpYnJhdGlvbiJ9LHsibmFtZSI6ImR2ZCIsImJyYW5kIjoiZHYiLCJtb2RlbCI6ImR2IiwibG9jIjoiZHYiLCJzbiI6ImR2Iiwic2VydmljZSI6IkNhbGlicmF0aW9uIn1d</span>:DATA_ENDS_HERE
+        DATA_BEGINS_HERE:<span id="dataPayload"></span>:DATA_ENDS_HERE
     </div>
 </div>
 
 <script>
-    // =========================================================
-    // 🔑 SECURE DIRECT CODE CONFIGURATION (No settings panel)
-    // =========================================================
+    // ====================================================================
+    // 🔑 SECURE DATABASE CONFIGURATION
+    // ====================================================================
     const GITHUB_USERNAME = "kemuelcatanbiomed-design"; 
     const GITHUB_REPO = "biomed-portal";             
-    const GITHUB_PAT = "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"; // 👈 Paste your real Personal Access Token here!
-    // =========================================================
+    const GITHUB_PAT = "ghp_yourActualTokenHere"; // 👈 Paste your GitHub Personal Access Token here!
+    const DATABASE_FILE_PATH = "data.json";       // The JSON file updated on your GitHub
+    // ====================================================================
 
     // Initialize PDF.js worker
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
-    // --- HARDCODED PRE-LOAD DATA (Directly imported from your PDF) ---
-    const defaultEquipmentDataset = [
-        {
-                "name": "Ventilator",
-                "brand": "Carefusion",
-                "model": "N/A",
-                "loc": "RESPI",
-                "sn": "BJT01646",
-                "service": "Repair"
-        },
-        {
-                "name": "Ventilator",
-                "brand": "Carefusion",
-                "model": "N/A",
-                "loc": "Respi",
-                "sn": "BJT01075",
-                "service": "Repair"
-        },
-        {
-                "name": "Ventilator",
-                "brand": "Mindray",
-                "model": "SV300",
-                "loc": "Respi",
-                "sn": "GB-08029647",
-                "service": "Repair"
-        },
-        {
-                "name": "Ventilator",
-                "brand": "Tecme",
-                "model": "N/A",
-                "loc": "Respi",
-                "sn": "210740201083A1V",
-                "service": "Repair"
-        },
-        {
-                "name": "Patient Monitor",
-                "brand": "Edan",
-                "model": "iM70",
-                "loc": "Respi",
-                "sn": "360080-M18112130015",
-                "service": "Calibration"
-        },
-        {
-                "name": "ECG",
-                "brand": "WELCHALLYN",
-                "model": "CP150",
-                "loc": "GHA",
-                "sn": "1100018012223",
-                "service": "Calibration"
-        },
-        {
-                "name": "REF",
-                "brand": "Haier",
-                "model": "HYC-940",
-                "loc": "2ND FLOOR LAB",
-                "sn": "BEO3LSEONO0QJN9Z0001",
-                "service": "Calibration"
-        },
-        {
-                "name": "PATUENT MONITOR",
-                "brand": "Bionet",
-                "model": "BM7",
-                "loc": "PEDIA",
-                "sn": "622B84",
-                "service": "Calibration"
-        },
-        {
-                "name": "Maternal Monitor",
-                "brand": "EDAN",
-                "model": "F9E",
-                "loc": "OB WARD",
-                "sn": "560039M24713190003",
-                "service": "Calibration"
-        },
-        {
-                "name": "PATIENT MONITOR",
-                "brand": "BIONET",
-                "model": "BM7",
-                "loc": "OB WARD",
-                "sn": "DL0700180",
-                "service": "Calibration"
-        },
-        {
-                "name": "PULSE OXIMTER",
-                "brand": "ChoiceMed",
-                "model": "MD300M",
-                "loc": "ER",
-                "sn": "240900200569",
-                "service": "Calibration"
-        },
-        {
-                "name": "Ventilator",
-                "brand": "MIDRAY",
-                "model": "SV300",
-                "loc": "ER",
-                "sn": "GB3C078376",
-                "service": "Calibration"
-        },
-        {
-                "name": "VENTILATOR",
-                "brand": "MINDRAY",
-                "model": "SV300",
-                "loc": "ER",
-                "sn": "GB5C094359",
-                "service": "Repair"
-        },
-        {
-                "name": "Pulse Oximeter",
-                "brand": "Armstrong Medical",
-                "model": "N/A",
-                "loc": "RESPI",
-                "sn": "714385209",
-                "service": "Calibration"
-        },
-        {
-                "name": "ECG MACHINE",
-                "brand": "WelchAllyn",
-                "model": "N/A",
-                "loc": "Respi",
-                "sn": "10002333382",
-                "service": "Calibration"
-        },
-        {
-                "name": "ECG MACHINE",
-                "brand": "WelchAllyn",
-                "model": "N/A",
-                "loc": "GHA",
-                "sn": "1100018012223",
-                "service": "Calibration"
-        },
-        {
-                "name": "Pharma Ref",
-                "brand": "BIOBASE",
-                "model": "N/A",
-                "loc": "PHARMACY",
-                "sn": "G1701004006BXC-V650M",
-                "service": "Calibration"
-        },
-        {
-                "name": "Defibrillator",
-                "brand": "LifePak20e",
-                "model": "N/A",
-                "loc": "Pedia",
-                "sn": "477446103",
-                "service": "Calibration"
-        },
-        {
-                "name": "PULSE OXIMETER",
-                "brand": "MASIMO",
-                "model": "N/A",
-                "loc": "ER",
-                "sn": "600015566",
-                "service": "Calibration"
-        },
-        {
-                "name": "sds",
-                "brand": "ssd",
-                "model": "sdsd",
-                "loc": "sds",
-                "sn": "sdsd",
-                "service": "Calibration"
-        },
-        {
-                "name": "v",
-                "brand": "v",
-                "model": "v",
-                "loc": "v",
-                "sn": "v",
-                "service": "Calibration"
-        },
-        {
-                "name": "dvd",
-                "brand": "dv",
-                "model": "dv",
-                "loc": "dv",
-                "sn": "dv",
-                "service": "Calibration"
+    let equipmentList = [];
+
+    // --- DYNAMIC DATA LOAD ENGINE ---
+    window.onload = async function() {
+        const statusEl = document.getElementById('syncStatus');
+        
+        // 1. Try to load local cache first for instant UI response
+        const localData = localStorage.getItem('savedEquipment');
+        if (localData) {
+            equipmentList = JSON.parse(localData);
+            renderTable();
+            saveAndRender();
         }
-];
 
-    // Load from localStorage or fall back to our default dataset if empty
-    let equipmentList = JSON.parse(localStorage.getItem('savedEquipment'));
-    
-    if (!equipmentList || equipmentList.length === 0) {
-        equipmentList = defaultEquipmentDataset;
-        localStorage.setItem('savedEquipment', JSON.stringify(equipmentList));
-    }
-
-    window.onload = function() {
-        renderTable();
-        saveAndRender(); 
+        // 2. Fetch fresh live database data from your GitHub hosted data.json
+        try {
+            const response = await fetch(DATABASE_FILE_PATH);
+            if (response.ok) {
+                const freshData = await response.json();
+                if (Array.isArray(freshData) && freshData.length > 0) {
+                    equipmentList = freshData;
+                    renderTable();
+                    saveAndRender();
+                    if (statusEl) {
+                        statusEl.innerHTML = "📂 Dynamic database connected & synchronized!";
+                        statusEl.style.color = "var(--success)";
+                        setTimeout(() => { statusEl.innerHTML = ""; }, 3000);
+                    }
+                }
+            }
+        } catch (err) {
+            console.log("Offline mode or running locally. Using local cache.");
+        }
     };
 
     function addEquipment(event) {
@@ -428,7 +271,7 @@
         document.getElementById('equipmentForm').reset();
         document.getElementById('eqName').focus();
         
-        // Trigger background sync instantly
+        // Auto-sync directly to your GitHub data.json
         autoSyncToGitHub();
     }
 
@@ -436,7 +279,7 @@
         localStorage.setItem('savedEquipment', JSON.stringify(equipmentList));
         renderTable();
         
-        // Encode data list to Base64 to keep it inside a single text block
+        // Encode data list to Base64 inside hidden PDF element
         if (equipmentList.length > 0) {
             document.getElementById('dataPayload').innerText = btoa(unescape(encodeURIComponent(JSON.stringify(equipmentList))));
         } else {
@@ -476,7 +319,7 @@
     }
 
     function clearList() {
-        if (confirm("Are you sure you want to clear the entire queue?")) {
+        if (confirm("Are you sure you want to clear the entire database queue?")) {
             equipmentList = [];
             localStorage.removeItem('savedEquipment');
             renderTable();
@@ -493,72 +336,45 @@
         window.print();
     }
 
-    // Generates the updated code content dynamically
-    function generateUpdatedHtmlContent() {
-        // Clear generated dynamic visual properties temporarily
-        const printDate = document.getElementById('printDate');
-        const tempPrintDateText = printDate.innerText;
-        printDate.innerText = "";
-
-        // Capture raw HTML structure
-        let sourceHtml = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
-
-        // Format the active dataset array as a pretty-printed JavaScript string
-        const formattedArray = "const defaultEquipmentDataset = " + JSON.stringify(equipmentList, null, 8) + ";";
-
-        // Regex to slice out the old default dataset block and update it
-        const regexDataset = /const defaultEquipmentDataset = \[\s*[\s\S]*?\s*\];/;
-        sourceHtml = sourceHtml.replace(regexDataset, formattedArray);
-
-        // Clean up the dynamic DOM table rows so the next download starts clean
-        const regexTableBody = /<tbody id="tableBody">[\s\S]*?<\/tbody>/;
-        sourceHtml = sourceHtml.replace(regexTableBody, '<tbody id="tableBody"></tbody>');
-
-        // Restore dynamic dashboard date values
-        printDate.innerText = tempPrintDateText;
-
-        return sourceHtml;
-    }
-
-    // --- AUTO-MODIFY & LOCAL EXPORT CODE ENGINE ---
-    function exportUpdatedCodeFile() {
+    // --- MANUAL LOCAL BACKUP EXPORT ---
+    function exportLocalJson() {
         if (equipmentList.length === 0) {
-            alert("Your list is empty! Add some equipment before exporting.");
+            alert("Your database is empty!");
             return;
         }
-        const updatedCode = generateUpdatedHtmlContent();
-        const blob = new Blob([updatedCode], { type: "text/html;charset=utf-8" });
+        const jsonString = JSON.stringify(equipmentList, null, 4);
+        const blob = new Blob([jsonString], { type: "application/json;charset=utf-8" });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = "index.html";
+        link.download = "data.json";
         link.click();
     }
 
-    // --- SILENT BACKGROUND GITHUB AUTO-SYNC ENGINE ---
+    // --- LIVE GITHUB DB AUTO-SYNC ENGINE ---
     async function autoSyncToGitHub() {
         const owner = GITHUB_USERNAME.trim();
         const repo = GITHUB_REPO.trim();
         const token = GITHUB_PAT.trim();
-        const path = "index.html"; 
+        const path = DATABASE_FILE_PATH; 
 
         const statusEl = document.getElementById('syncStatus');
 
-        // Safety check if configurations are left default or empty
+        // Check credentials configuration
         if (!owner || !repo || !token || token.includes("yourActualTokenHere") || token.includes("ghp_xxxx")) {
             if (statusEl) {
-                statusEl.innerHTML = "⚠️ Setup incomplete. Please update GITHUB_PAT directly inside the script to enable Auto-Sync.";
+                statusEl.innerHTML = "⚠️ Configuration incomplete. Please insert your actual GitHub Personal Access Token (PAT) inside the script config.";
                 statusEl.style.color = "var(--danger)";
             }
             return;
         }
 
         if (statusEl) {
-            statusEl.innerHTML = "⏳ Auto-syncing updates directly to GitHub...";
+            statusEl.innerHTML = "⏳ Syncing database changes to GitHub (data.json)...";
             statusEl.style.color = "var(--primary)";
         }
 
         try {
-            // Step 1: Get the current version of index.html file SHA from GitHub
+            // Step 1: Retrieve the SHA identifier of data.json currently on GitHub
             const getUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
             const getResponse = await fetch(getUrl, {
                 headers: { "Authorization": `token ${token}` }
@@ -569,16 +385,16 @@
                 const fileData = await getResponse.json();
                 sha = fileData.sha;
             } else if (getResponse.status !== 404) {
-                throw new Error("Unable to reach repository settings.");
+                throw new Error("Unable to contact GitHub repository.");
             }
 
-            // Step 2: Generate current page code
-            const finalCode = generateUpdatedHtmlContent();
-            const base64Content = btoa(unescape(encodeURIComponent(finalCode)));
+            // Step 2: Structure updated JSON string and convert to Base64
+            const dbDataString = JSON.stringify(equipmentList, null, 4);
+            const base64Content = btoa(unescape(encodeURIComponent(dbDataString)));
 
-            // Step 3: Put updated code file back to your GitHub main branch
+            // Step 3: Put/Write updated file back to the master branch
             const putPayload = {
-                message: "Auto-sync queue update",
+                message: "Database updated dynamically via Biomed-Portal",
                 content: base64Content,
                 branch: "main"
             };
@@ -595,25 +411,24 @@
 
             if (putResponse.ok) {
                 if (statusEl) {
-                    statusEl.innerHTML = "✅ Live Site Auto-Synced Successfully!";
+                    statusEl.innerHTML = "✅ Live GitHub Database (data.json) Updated Successfully!";
                     statusEl.style.color = "var(--success)";
-                    // Clear status text after 4 seconds
                     setTimeout(() => { statusEl.innerHTML = ""; }, 4000);
                 }
             } else {
                 const errorInfo = await putResponse.json();
-                throw new Error(errorInfo.message || "Push rejected by GitHub.");
+                throw new Error(errorInfo.message || "Failed pushing database change.");
             }
 
         } catch (error) {
             if (statusEl) {
-                statusEl.innerHTML = "❌ Live Sync Failed: " + error.message;
+                statusEl.innerHTML = "❌ Database Auto-Sync Failed: " + error.message;
                 statusEl.style.color = "var(--danger)";
             }
         }
     }
 
-    // --- PDF DIRECT IMPORT & AUTOFILL ENGINE ---
+    // --- PDF DIRECT IMPORT ENGINE ---
     function triggerPdfImport() {
         document.getElementById('pdfFileInput').value = ''; 
         document.getElementById('pdfFileInput').click();
@@ -679,6 +494,5 @@
         reader.readAsArrayBuffer(file);
     }
 </script>
-
 
 </body></html>
