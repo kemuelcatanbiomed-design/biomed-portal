@@ -70,30 +70,6 @@
         .btn-export:hover { background-color: #5930a4; }
         .btn-clear { background-color: var(--danger); color: white; }
         .btn-clear:hover { background-color: #c82333; }
-        
-        /* GitHub Sync Panel Styling */
-        .github-sync-panel {
-            background-color: #f8f9fa;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 15px;
-            margin-bottom: 30px;
-        }
-        .github-sync-panel h4 {
-            margin-top: 0;
-            color: #333;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .github-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-        }
-        @media (max-width: 700px) { .github-grid { grid-template-columns: 1fr; } }
 
         .table-container { margin-top: 20px; overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
@@ -110,7 +86,7 @@
         /* Sync Status Text style */
         .sync-status-wrapper {
             text-align: center;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
             font-size: 14px;
             font-weight: bold;
             min-height: 20px;
@@ -132,7 +108,7 @@
         @media print {
             body { background: white; color: black; padding: 0; margin: 0; }
             .container { box-shadow: none; max-width: 100%; padding: 0; border: none; }
-            #inputSection, .github-sync-panel, .sync-status-wrapper, .action-cell, th:last-child, .button-group { display: none !important; }
+            #inputSection, .sync-status-wrapper, .action-cell, th:last-child, .button-group { display: none !important; }
             .print-only-header { display: block !important; }
             .signature-block { display: flex !important; justify-content: space-between; }
             table { width: 100%; border: 1px solid #000; }
@@ -195,28 +171,9 @@
         </form>
     </div>
 
-    <!-- GitHub Sync Control Panel (Secure, Runs locally, Auto-saves changes) -->
-    <div class="github-sync-panel">
-        <h4>📦 GitHub Auto-Sync Settings</h4>
-        <div class="github-grid">
-            <div class="form-group">
-                <label for="ghUser">GitHub Username</label>
-                <input type="text" id="ghUser" placeholder="kemuelcatanbiomed-design" value="kemuelcatanbiomed-design" oninput="saveGitSettings()">
-            </div>
-            <div class="form-group">
-                <label for="ghRepo">Repository Name</label>
-                <input type="text" id="ghRepo" placeholder="biomed-portal" value="biomed-portal" oninput="saveGitSettings()">
-            </div>
-            <div class="form-group">
-                <label for="ghToken">Personal Access Token (PAT)</label>
-                <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxx" oninput="saveGitSettings()">
-            </div>
-        </div>
-    </div>
-
     <!-- Real-time Status Indicator -->
     <div class="sync-status-wrapper">
-        <span id="syncStatus" style="color: var(--primary);">⏳ Auto-syncing updates directly to GitHub...</span>
+        <span id="syncStatus"></span>
     </div>
 
     <h3>Equipment Queue</h3>
@@ -243,13 +200,21 @@
         <div class="sig-line">Biomedical Supervisor Approval</div>
     </div>
 
-    <!-- The Hidden Metadata Container (Saves raw data directly inside the PDF structure) -->
+    <!-- The Hidden Metadata Container -->
     <div id="pdfDataBlock" class="pdf-metadata">
-        DATA_BEGINS_HERE:<span id="dataPayload">W3sibmFtZSI6IlZlbnRpbGF0b3IiLCJicmFuZCI6IkNhcmVmdXNpb24iLCJtb2RlbCI6Ik4vQSIsImxvYyI6IlJFU1BJIiwic24iOiJCSlQwMTY0NiIsInNlcnZpY2UiOiJSZXBhaXIifSx7Im5hbWUiOiJWZW50aWxhdG9yIiwiYnJhbmQiOiJDYXJlZnVzaW9uIiwibW9kZWwiOiJOL0EiLCJsb2MiOiJSZXNwaSIsInNuIjoiQkpUMDEwNzUiLCJzZXJ2aWNlIjoiUmVwYWlyIn0seyJuYW1lIjoiVmVudGlsYXRvciIsImJyYW5kIjoiTWluZHJheSIsIm1vZGVsIjoiU1YzMDAiLCJsb2MiOiJSZXNwaSIsInNuIjoiR0ItMDgwMjk2NDciLCJzZXJ2aWNlIjoiUmVwYWlyIn0seyJuYW1lIjoiVmVudGlsYXRvciIsImJyYW5kIjoiVGVjbWUiLCJtb2RlbCI6Ik4vQSIsImxvYyI6IlJlc3BpIiwic24iOiIyMTA3NDAyMDEwODNBMVYiLCJzZXJ2aWNlIjoiUmVwYWlyIn0seyJuYW1lIjoiUGF0aWVudCBNb25pdG9yIiwiYnJhbmQiOiJFZGFuIiwibW9kZWwiOiJpTTcwIiwibG9jIjoiUmVzcGkiLCJzbiI6IjM2MDA4MC1NMTgxMTIxMzAwMTUiLCJzZXJ2aWNlIjoiQ2FsaWJyYXRpb24ifSx7Im5hbWUiOiJFQ0ciLCJicmFuZCI6IldFTENIQUxMWU4iLCJtb2RlbCI6IkNQMTUwIiwibG9jIjoiR0hBIiwic24iOiIxMTAwMDE4MDEyMjIzIiwic2VydmljZSI6IkNhbGlicmF0aW9uIn0seyJuYW1lIjoiUkVGIiwiYnJhbmQiOiJIYWllciIsIm1vZGVsIjoiSFlDLTk0MCIsImxvYyI6IjJORCBGTE9PUiBMQUIiLCJzbiI6IkJFTzNMU0VPTk8wUUpOOVowMDAxIiwic2VydmljZSI6IkNhbGlicmF0aW9uIn0seyJuYW1lIjoiUEFUVUVOVCBNT05JVE9SIiwiYnJhbmQiOiJCaW9uZXQiLCJtb2RlbCI6IkJNNyIsImxvYyI6IlBFRElBIiwic24iOiI2MjJCODQiLCJzZXJ2aWNlIjoiQ2FsaWJyYXRpb24ifSx7Im5hbWUiOiJNYXRlcm5hbCBNb25pdG9yIiwiYnJhbmQiOiJFREFOIiwibW9kZWwiOiJGOUUiLCJsb2MiOiJPQiBXQVJEIiwic24iOiI1NjAwMzlNMjQ3MTMxOTAwMDMiLCJzZXJ2aWNlIjoiQ2FsaWJyYXRpb24ifSx7Im5hbWUiOiJQQVRJRU5UIE1PTklUT1IiLCJicmFuZCI6IkJJT05FVCIsIm1vZGVsIjoiQk03IiwibG9jIjoiT0IgV0FSRCIsInNuIjoiREwwNzAwMTgwIiwic2VydmljZSI6IkNhbGlicmF0aW9uIn0seyJuYW1lIjoiUFVMU0UgT1hJTVRFUiIsImJyYW5kIjoiQ2hvaWNlTWVkIiwibW9kZWwiOiJNRDMwME0iLCJsb2MiOiJFUiIsInNuIjoiMjQwOTAwMjAwNTY5Iiwic2VydmljZSI6IkNhbGlicmF0aW9uIn0seyJuYW1lIjoiVmVudGlsYXRvciIsImJyYW5kIjoiTUlEUkFZIiwibW9kZWwiOiJTVjMwMCIsImxvYyI6IkVSIiwic24iOiJHQjNDMDc4Mzc2Iiwic2VydmljZSI6IkNhbGlicmF0aW9uIn0seyJuYW1lIjoiVkVOVElMQVRPUiIsImJyYW5kIjoiTUlORFJBWSIsIm1vZGVsIjoiU1YzMDAiLCJsb2MiOiJFUiIsInNuIjoiR0I1QzA5NDM1OSIsInNlcnZpY2UiOiJSZXBhaXIifSx7Im5hbWUiOiJQdWxzZSBPeGltZXRlciIsImJyYW5kIjoiQXJtc3Ryb25nIE1lZGljYWwiLCJtb2RlbCI6Ik4vQSIsImxvYyI6IlJFU1BJIiwic24iOiI3MTQzODUyMDkiLCJzZXJ2aWNlIjoiQ2FsaWJyYXRpb24ifSx7Im5hbWUiOiJFQ0cgTUFDSElORSIsImJyYW5kIjoiV2VsY2hBbGx5biIsIm1vZGVsIjoiTi9BIiwibG9jIjoiUmVzcGkiLCJzbiI6IjEwMDAyMzMzMzgyIiwic2VydmljZSI6IkNhbGlicmF0aW9uIn0seyJuYW1lIjoiRUNHIE1BQ0hJTkUiLCJicmFuZCI6IldlbGNoQWxseW4iLCJtb2RlbCI6Ik4vQSIsImxvYyI6IkdIQSIsInNuIjoiMTEwMDAxODAxMjIyMyIsInNlcnZpY2UiOiJDYWxpYnJhdGlvbiJ9LHsibmFtZSI6IlBoYXJtYSBSZWYiLCJicmFuZCI6IkJJT0JBU0UiLCJtb2RlbCI6Ik4vQSIsImxvYyI6IlBIQVJNQUNZIiwic24iOiJHMTcwMTAwNDAwNkJYQy1WNjUwTSIsInNlcnZpY2UiOiJDYWxpYnJhdGlvbiJ9LHsibmFtZSI6IkRlZmlicmlsbGF0b3IiLCJicmFuZCI6IkxpZmVQYWsyMGUiLCJtb2RlbCI6Ik4vQSIsImxvYyI6IlBlZGlhIiwic24iOiI0Nzc0NDYxMDMiLCJzZXJ2aWNlIjoiQ2FsaWJyYXRpb24ifSx7Im5hbWUiOiJQVUxTRSBPWElNRVRFUiIsImJyYW5kIjoiTUFTSU1PIiwibW9kZWwiOiJOL0EiLCJsb2MiOiJFUiIsInNuIjoiNjAwMDE1NTY2Iiwic2VydmljZSI6IkNhbGlicmF0aW9uIn0seyJuYW1lIjoieHYiLCJicmFuZCI6Inh2eCIsIm1vZGVsIjoieHZ4IiwibG9jIjoieHZ4Iiwic24iOiJ4diIsInNlcnZpY2UiOiJDYWxpYnJhdGlvbiJ9XQ==</span>:DATA_ENDS_HERE
+        DATA_BEGINS_HERE:<span id="dataPayload"></span>:DATA_ENDS_HERE
     </div>
 </div>
 
 <script>
+    // =========================================================
+    // 🔑 SECURE DIRECT CODE CONFIGURATION (No settings panel)
+    // =========================================================
+    const GITHUB_USERNAME = "kemuelcatanbiomed-design"; 
+    const GITHUB_REPO = "biomed-portal";             
+    const GITHUB_PAT = "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"; // 👈 Paste your real Personal Access Token here!
+    // =========================================================
+
     // Initialize PDF.js worker
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
@@ -406,18 +371,10 @@
                 "loc": "ER",
                 "sn": "600015566",
                 "service": "Calibration"
-        },
-        {
-                "name": "xv",
-                "brand": "xvx",
-                "model": "xvx",
-                "loc": "xvx",
-                "sn": "xv",
-                "service": "Calibration"
         }
-];
+    ];
 
-    // Load from localStorage or fall back to our pre-loaded PDF dataset if empty
+    // Load from localStorage or fall back to our default dataset if empty
     let equipmentList = JSON.parse(localStorage.getItem('savedEquipment'));
     
     if (!equipmentList || equipmentList.length === 0) {
@@ -426,20 +383,9 @@
     }
 
     window.onload = function() {
-        // Load GitHub settings from localStorage if available
-        if (localStorage.getItem('gh_username')) document.getElementById('ghUser').value = localStorage.getItem('gh_username');
-        if (localStorage.getItem('gh_repo')) document.getElementById('ghRepo').value = localStorage.getItem('gh_repo');
-        if (localStorage.getItem('gh_token')) document.getElementById('ghToken').value = localStorage.getItem('gh_token');
-        
         renderTable();
         saveAndRender(); 
     };
-
-    function saveGitSettings() {
-        localStorage.setItem('gh_username', document.getElementById('ghUser').value.trim());
-        localStorage.setItem('gh_repo', document.getElementById('ghRepo').value.trim());
-        localStorage.setItem('gh_token', document.getElementById('ghToken').value.trim());
-    }
 
     function addEquipment(event) {
         event.preventDefault();
@@ -458,7 +404,7 @@
         document.getElementById('equipmentForm').reset();
         document.getElementById('eqName').focus();
         
-        // Trigger background sync
+        // Trigger background sync instantly
         autoSyncToGitHub();
     }
 
@@ -566,16 +512,17 @@
 
     // --- SILENT BACKGROUND GITHUB AUTO-SYNC ENGINE ---
     async function autoSyncToGitHub() {
-        const owner = document.getElementById('ghUser').value.trim();
-        const repo = document.getElementById('ghRepo').value.trim();
-        const token = document.getElementById('ghToken').value.trim();
+        const owner = GITHUB_USERNAME.trim();
+        const repo = GITHUB_REPO.trim();
+        const token = GITHUB_PAT.trim();
         const path = "index.html"; 
 
         const statusEl = document.getElementById('syncStatus');
 
-        if (!owner || !repo || !token) {
+        // Safety check if configurations are left default or empty
+        if (!owner || !repo || !token || token.includes("yourActualTokenHere") || token.includes("ghp_xxxx")) {
             if (statusEl) {
-                statusEl.innerHTML = "⚠️ Setup incomplete. Provide your Token (PAT) below to enable automatic live sync!";
+                statusEl.innerHTML = "⚠️ Setup incomplete. Please update GITHUB_PAT directly inside the script to enable Auto-Sync.";
                 statusEl.style.color = "var(--danger)";
             }
             return;
@@ -626,7 +573,7 @@
                 if (statusEl) {
                     statusEl.innerHTML = "✅ Live Site Auto-Synced Successfully!";
                     statusEl.style.color = "var(--success)";
-                    // Clear the success status after 4 seconds
+                    // Clear status text after 4 seconds
                     setTimeout(() => { statusEl.innerHTML = ""; }, 4000);
                 }
             } else {
@@ -708,6 +655,5 @@
         reader.readAsArrayBuffer(file);
     }
 </script>
-
 
 </body></html>
