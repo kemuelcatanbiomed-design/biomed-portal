@@ -150,13 +150,5 @@
         "loc": "ER",
         "sn": "600015566",
         "service": "Calibration"
-    },
-    {
-        "name": "xvxv",
-        "brand": "xvxv",
-        "model": "xvxv",
-        "loc": "xvx",
-        "sn": "xvxv",
-        "service": "Calibration"
     }
 ]
