@@ -92,22 +92,8 @@
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 10px;
-            margin-bottom: 10px;
         }
         @media (max-width: 700px) { .github-grid { grid-template-columns: 1fr; } }
-        .btn-sync {
-            background-color: #24292e;
-            color: white;
-            width: 100%;
-            padding: 10px;
-            font-size: 14px;
-            font-weight: bold;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .btn-sync:hover { background-color: #444; }
 
         .table-container { margin-top: 20px; overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
@@ -120,6 +106,15 @@
         .print-only-header { display: none; text-align: center; border-bottom: 3px double #333; padding-bottom: 15px; margin-bottom: 25px; }
         .signature-block { display: none; margin-top: 40px; }
         .sig-line { border-top: 1px solid #333; width: 40%; text-align: center; padding-top: 5px; font-size: 12px; }
+
+        /* Sync Status Text style */
+        .sync-status-wrapper {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            min-height: 20px;
+        }
 
         /* Robust Invisible Metadata Block inside PDF */
         .pdf-metadata {
@@ -137,7 +132,7 @@
         @media print {
             body { background: white; color: black; padding: 0; margin: 0; }
             .container { box-shadow: none; max-width: 100%; padding: 0; border: none; }
-            #inputSection, .github-sync-panel, .action-cell, th:last-child, .button-group { display: none !important; }
+            #inputSection, .github-sync-panel, .sync-status-wrapper, .action-cell, th:last-child, .button-group { display: none !important; }
             .print-only-header { display: block !important; }
             .signature-block { display: flex !important; justify-content: space-between; }
             table { width: 100%; border: 1px solid #000; }
@@ -200,24 +195,28 @@
         </form>
     </div>
 
-    <!-- GitHub Sync Control Panel (Secure & Runs locally in your browser) -->
+    <!-- GitHub Sync Control Panel (Secure, Runs locally, Auto-saves changes) -->
     <div class="github-sync-panel">
-        <h4>📦 GitHub Live Sync Settings</h4>
+        <h4>📦 GitHub Auto-Sync Settings</h4>
         <div class="github-grid">
             <div class="form-group">
                 <label for="ghUser">GitHub Username</label>
-                <input type="text" id="ghUser" placeholder="kemuelcatanbiomed-design" value="kemuelcatanbiomed-design">
+                <input type="text" id="ghUser" placeholder="kemuelcatanbiomed-design" value="kemuelcatanbiomed-design" oninput="saveGitSettings()">
             </div>
             <div class="form-group">
                 <label for="ghRepo">Repository Name</label>
-                <input type="text" id="ghRepo" placeholder="biomed-portal" value="biomed-portal">
+                <input type="text" id="ghRepo" placeholder="biomed-portal" value="biomed-portal" oninput="saveGitSettings()">
             </div>
             <div class="form-group">
                 <label for="ghToken">Personal Access Token (PAT)</label>
-                <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxx">
+                <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxx" oninput="saveGitSettings()">
             </div>
         </div>
-        <button type="button" onclick="syncToGitHub()" class="btn-sync" disabled="">⏳ Connecting to GitHub...</button>
+    </div>
+
+    <!-- Real-time Status Indicator -->
+    <div class="sync-status-wrapper">
+        <span id="syncStatus"></span>
     </div>
 
     <h3>Equipment Queue</h3>
@@ -246,7 +245,7 @@
 
     <!-- The Hidden Metadata Container (Saves raw data directly inside the PDF structure) -->
     <div id="pdfDataBlock" class="pdf-metadata">
-        DATA_BEGINS_HERE:<span id="dataPayload">W3sibmFtZSI6IlZlbnRpbGF0b3IiLCJicmFuZCI6IkNhcmVmdXNpb24iLCJtb2RlbCI6Ik4vQSIsImxvYyI6IlJFU1BJIiwic24iOiJCSlQwMTY0NiIsInNlcnZpY2UiOiJSZXBhaXIifSx7Im5hbWUiOiJWZW50aWxhdG9yIiwiYnJhbmQiOiJDYXJlZnVzaW9uIiwibW9kZWwiOiJOL0EiLCJsb2MiOiJSZXNwaSIsInNuIjoiQkpUMDEwNzUiLCJzZXJ2aWNlIjoiUmVwYWlyIn0seyJuYW1lIjoiVmVudGlsYXRvciIsImJyYW5kIjoiTWluZHJheSIsIm1vZGVsIjoiU1YzMDAiLCJsb2MiOiJSZXNwaSIsInNuIjoiR0ItMDgwMjk2NDciLCJzZXJ2aWNlIjoiUmVwYWlyIn0seyJuYW1lIjoiVmVudGlsYXRvciIsImJyYW5kIjoiVGVjbWUiLCJtb2RlbCI6Ik4vQSIsImxvYyI6IlJlc3BpIiwic24iOiIyMTA3NDAyMDEwODNBMVYiLCJzZXJ2aWNlIjoiUmVwYWlyIn0seyJuYW1lIjoiUGF0aWVudCBNb25pdG9yIiwiYnJhbmQiOiJFZGFuIiwibW9kZWwiOiJpTTcwIiwibG9jIjoiUmVzcGkiLCJzbiI6IjM2MDA4MC1NMTgxMTIxMzAwMTUiLCJzZXJ2aWNlIjoiQ2FsaWJyYXRpb24ifSx7Im5hbWUiOiJFQ0ciLCJicmFuZCI6IldFTENIQUxMWU4iLCJtb2RlbCI6IkNQMTUwIiwibG9jIjoiR0hBIiwic24iOiIxMTAwMDE4MDEyMjIzIiwic2VydmljZSI6IkNhbGlicmF0aW9uIn0seyJuYW1lIjoiUkVGIiwiYnJhbmQiOiJIYWllciIsIm1vZGVsIjoiSFlDLTk0MCIsImxvYyI6IjJORCBGTE9PUiBMQUIiLCJzbiI6IkJFTzNMU0VPTk8wUUpOOVowMDAxIiwic2VydmljZSI6IkNhbGlicmF0aW9uIn0seyJuYW1lIjoiUEFUVUVOVCBNT05JVE9SIiwiYnJhbmQiOiJCaW9uZXQiLCJtb2RlbCI6IkJNNyIsImxvYyI6IlBFRElBIiwic24iOiI2MjJCODQiLCJzZXJ2aWNlIjoiQ2FsaWJyYXRpb24ifSx7Im5hbWUiOiJNYXRlcm5hbCBNb25pdG9yIiwiYnJhbmQiOiJFREFOIiwibW9kZWwiOiJGOUUiLCJsb2MiOiJPQiBXQVJEIiwic24iOiI1NjAwMzlNMjQ3MTMxOTAwMDMiLCJzZXJ2aWNlIjoiQ2FsaWJyYXRpb24ifSx7Im5hbWUiOiJQQVRJRU5UIE1PTklUT1IiLCJicmFuZCI6IkJJT05FVCIsIm1vZGVsIjoiQk03IiwibG9jIjoiT0IgV0FSRCIsInNuIjoiREwwNzAwMTgwIiwic2VydmljZSI6IkNhbGlicmF0aW9uIn0seyJuYW1lIjoiUFVMU0UgT1hJTVRFUiIsImJyYW5kIjoiQ2hvaWNlTWVkIiwibW9kZWwiOiJNRDMwME0iLCJsb2MiOiJFUiIsInNuIjoiMjQwOTAwMjAwNTY5Iiwic2VydmljZSI6IkNhbGlicmF0aW9uIn0seyJuYW1lIjoiVmVudGlsYXRvciIsImJyYW5kIjoiTUlEUkFZIiwibW9kZWwiOiJTVjMwMCIsImxvYyI6IkVSIiwic24iOiJHQjNDMDc4Mzc2Iiwic2VydmljZSI6IkNhbGlicmF0aW9uIn0seyJuYW1lIjoiVkVOVElMQVRPUiIsImJyYW5kIjoiTUlORFJBWSIsIm1vZGVsIjoiU1YzMDAiLCJsb2MiOiJFUiIsInNuIjoiR0I1QzA5NDM1OSIsInNlcnZpY2UiOiJSZXBhaXIifSx7Im5hbWUiOiJQdWxzZSBPeGltZXRlciIsImJyYW5kIjoiQXJtc3Ryb25nIE1lZGljYWwiLCJtb2RlbCI6Ik4vQSIsImxvYyI6IlJFU1BJIiwic24iOiI3MTQzODUyMDkiLCJzZXJ2aWNlIjoiQ2FsaWJyYXRpb24ifSx7Im5hbWUiOiJFQ0cgTUFDSElORSIsImJyYW5kIjoiV2VsY2hBbGx5biIsIm1vZGVsIjoiTi9BIiwibG9jIjoiUmVzcGkiLCJzbiI6IjEwMDAyMzMzMzgyIiwic2VydmljZSI6IkNhbGlicmF0aW9uIn0seyJuYW1lIjoiRUNHIE1BQ0hJTkUiLCJicmFuZCI6IldlbGNoQWxseW4iLCJtb2RlbCI6Ik4vQSIsImxvYyI6IkdIQSIsInNuIjoiMTEwMDAxODAxMjIyMyIsInNlcnZpY2UiOiJDYWxpYnJhdGlvbiJ9LHsibmFtZSI6IlBoYXJtYSBSZWYiLCJicmFuZCI6IkJJT0JBU0UiLCJtb2RlbCI6Ik4vQSIsImxvYyI6IlBIQVJNQUNZIiwic24iOiJHMTcwMTAwNDAwNkJYQy1WNjUwTSIsInNlcnZpY2UiOiJDYWxpYnJhdGlvbiJ9LHsibmFtZSI6IkRlZmlicmlsbGF0b3IiLCJicmFuZCI6IkxpZmVQYWsyMGUiLCJtb2RlbCI6Ik4vQSIsImxvYyI6IlBlZGlhIiwic24iOiI0Nzc0NDYxMDMiLCJzZXJ2aWNlIjoiQ2FsaWJyYXRpb24ifSx7Im5hbWUiOiJQVUxTRSBPWElNRVRFUiIsImJyYW5kIjoiTUFTSU1PIiwibW9kZWwiOiJOL0EiLCJsb2MiOiJFUiIsInNuIjoiNjAwMDE1NTY2Iiwic2VydmljZSI6IkNhbGlicmF0aW9uIn0seyJuYW1lIjoiRFZEIiwiYnJhbmQiOiJEVkQiLCJtb2RlbCI6IkRWRFYiLCJsb2MiOiJEVkQiLCJzbiI6IkRWRCIsInNlcnZpY2UiOiJDYWxpYnJhdGlvbiJ9XQ==</span>:DATA_ENDS_HERE
+        DATA_BEGINS_HERE:<span id="dataPayload"></span>:DATA_ENDS_HERE
     </div>
 </div>
 
@@ -407,16 +406,8 @@
                 "loc": "ER",
                 "sn": "600015566",
                 "service": "Calibration"
-        },
-        {
-                "name": "DVD",
-                "brand": "DVD",
-                "model": "DVDV",
-                "loc": "DVD",
-                "sn": "DVD",
-                "service": "Calibration"
         }
-];
+    ];
 
     // Load from localStorage or fall back to our pre-loaded PDF dataset if empty
     let equipmentList = JSON.parse(localStorage.getItem('savedEquipment'));
@@ -436,6 +427,12 @@
         saveAndRender(); 
     };
 
+    function saveGitSettings() {
+        localStorage.setItem('gh_username', document.getElementById('ghUser').value.trim());
+        localStorage.setItem('gh_repo', document.getElementById('ghRepo').value.trim());
+        localStorage.setItem('gh_token', document.getElementById('ghToken').value.trim());
+    }
+
     function addEquipment(event) {
         event.preventDefault();
 
@@ -452,6 +449,9 @@
         saveAndRender();
         document.getElementById('equipmentForm').reset();
         document.getElementById('eqName').focus();
+        
+        // Trigger background sync
+        autoSyncToGitHub();
     }
 
     function saveAndRender() {
@@ -494,6 +494,7 @@
     function removeItem(index) {
         equipmentList.splice(index, 1);
         saveAndRender();
+        autoSyncToGitHub();
     }
 
     function clearList() {
@@ -501,6 +502,7 @@
             equipmentList = [];
             localStorage.removeItem('savedEquipment');
             renderTable();
+            autoSyncToGitHub();
         }
     }
 
@@ -554,29 +556,30 @@
         link.click();
     }
 
-    // --- DIRECT GITHUB API LIVE UPDATE ENGINE ---
-    async function syncToGitHub() {
+    // --- SILENT BACKGROUND GITHUB AUTO-SYNC ENGINE ---
+    async function autoSyncToGitHub() {
         const owner = document.getElementById('ghUser').value.trim();
         const repo = document.getElementById('ghRepo').value.trim();
         const token = document.getElementById('ghToken').value.trim();
-        const path = "index.html"; // The filename in your root directory
+        const path = "index.html"; 
+
+        const statusEl = document.getElementById('syncStatus');
 
         if (!owner || !repo || !token) {
-            alert("⚠️ Please provide your Username, Repo Name, and a valid GitHub Personal Access Token first!");
+            if (statusEl) {
+                statusEl.innerHTML = "⚠️ Setup incomplete. Provide your Token (PAT) below to enable automatic live sync!";
+                statusEl.style.color = "var(--danger)";
+            }
             return;
         }
 
-        // Save settings locally to avoid re-entering them next time
-        localStorage.setItem('gh_username', owner);
-        localStorage.setItem('gh_repo', repo);
-        localStorage.setItem('gh_token', token);
-
-        const btn = document.querySelector('.btn-sync');
-        btn.innerText = "⏳ Connecting to GitHub...";
-        btn.disabled = true;
+        if (statusEl) {
+            statusEl.innerHTML = "⏳ Auto-syncing updates directly to GitHub...";
+            statusEl.style.color = "var(--primary)";
+        }
 
         try {
-            // Step 1: Fetch current file details from GitHub API to get the required "SHA"
+            // Step 1: Get the current version of index.html file SHA from GitHub
             const getUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
             const getResponse = await fetch(getUrl, {
                 headers: { "Authorization": `token ${token}` }
@@ -587,21 +590,20 @@
                 const fileData = await getResponse.json();
                 sha = fileData.sha;
             } else if (getResponse.status !== 404) {
-                throw new Error("Could not check repo existence. Please verify your token and repo name.");
+                throw new Error("Unable to reach repository settings.");
             }
 
-            // Step 2: Generate current page code featuring your active list as defaults
+            // Step 2: Generate current page code
             const finalCode = generateUpdatedHtmlContent();
-            // Encode the file safely to base64 for transmission
             const base64Content = btoa(unescape(encodeURIComponent(finalCode)));
 
-            // Step 3: Put the updated file back into GitHub
+            // Step 3: Put updated code file back to your GitHub main branch
             const putPayload = {
-                message: "Update equipment queue via portal panel",
+                message: "Auto-sync queue update",
                 content: base64Content,
                 branch: "main"
             };
-            if (sha) putPayload.sha = sha; // Required if updating an existing file
+            if (sha) putPayload.sha = sha;
 
             const putResponse = await fetch(getUrl, {
                 method: "PUT",
@@ -613,17 +615,22 @@
             });
 
             if (putResponse.ok) {
-                alert("🎉 Success! Your latest equipment list is now saved directly into GitHub index.html. Your live website will update in less than a minute!");
+                if (statusEl) {
+                    statusEl.innerHTML = "✅ Live Site Auto-Synced Successfully!";
+                    statusEl.style.color = "var(--success)";
+                    // Clear the success status after 4 seconds
+                    setTimeout(() => { statusEl.innerHTML = ""; }, 4000);
+                }
             } else {
                 const errorInfo = await putResponse.json();
-                throw new Error(errorInfo.message || "Failed to commit files.");
+                throw new Error(errorInfo.message || "Push rejected by GitHub.");
             }
 
         } catch (error) {
-            alert("❌ Sync Error: " + error.message);
-        } finally {
-            btn.innerText = "🔄 Save Queue & Update Live GitHub Site";
-            btn.disabled = false;
+            if (statusEl) {
+                statusEl.innerHTML = "❌ Live Sync Failed: " + error.message;
+                statusEl.style.color = "var(--danger)";
+            }
         }
     }
 
@@ -666,6 +673,7 @@
                         }
                         
                         saveAndRender();
+                        autoSyncToGitHub();
 
                         // AUTOFILL FORM FIELDS
                         const lastItem = importedList[importedList.length - 1];
@@ -692,6 +700,5 @@
         reader.readAsArrayBuffer(file);
     }
 </script>
-
 
 </body></html>
