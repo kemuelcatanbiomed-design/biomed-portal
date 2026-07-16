@@ -11,6 +11,10 @@
             --bg-color: #f4f6f9;
             --text-color: #333;
             --border-color: #ddd;
+            --success: #28a745;
+            --info: #17a2b8;
+            --purple: #6f42c1;
+            --danger: #dc3545;
         }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -51,22 +55,60 @@
         @media (max-width: 500px) { .form-grid { grid-template-columns: 1fr; } }
         .form-group { margin-bottom: 5px; }
         label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 14px; }
-        input[type="text"], select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 14px; }
-        input[type="text"]:focus, select:focus { border-color: var(--primary); outline: none; }
+        input[type="text"], input[type="password"], select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 14px; }
+        input[type="text"]:focus, input[type="password"]:focus, select:focus { border-color: var(--primary); outline: none; }
         
-        .button-group { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 30px; }
+        .button-group { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
         .btn { padding: 12px 15px; border: none; border-radius: 4px; font-size: 14px; font-weight: bold; cursor: pointer; transition: background 0.2s; flex: 1; min-width: 120px; }
-        .btn-add { background-color: #28a745; color: white; }
+        .btn-add { background-color: var(--success); color: white; }
         .btn-add:hover { background-color: #218838; }
         .btn-print { background-color: var(--primary); color: white; }
         .btn-print:hover { background-color: #004085; }
-        .btn-import { background-color: #17a2b8; color: white; }
+        .btn-import { background-color: var(--info); color: white; }
         .btn-import:hover { background-color: #138496; }
-        .btn-export { background-color: #6f42c1; color: white; }
+        .btn-export { background-color: var(--purple); color: white; }
         .btn-export:hover { background-color: #5930a4; }
-        .btn-clear { background-color: #dc3545; color: white; }
+        .btn-clear { background-color: var(--danger); color: white; }
         .btn-clear:hover { background-color: #c82333; }
         
+        /* GitHub Sync Panel Styling */
+        .github-sync-panel {
+            background-color: #f8f9fa;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 30px;
+        }
+        .github-sync-panel h4 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .github-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        @media (max-width: 700px) { .github-grid { grid-template-columns: 1fr; } }
+        .btn-sync {
+            background-color: #24292e;
+            color: white;
+            width: 100%;
+            padding: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-sync:hover { background-color: #444; }
+
         .table-container { margin-top: 20px; overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
         th, td { border: 1px solid var(--border-color); padding: 12px; text-align: left; font-size: 14px; }
@@ -95,7 +137,7 @@
         @media print {
             body { background: white; color: black; padding: 0; margin: 0; }
             .container { box-shadow: none; max-width: 100%; padding: 0; border: none; }
-            #inputSection, .action-cell, th:last-child, .button-group { display: none !important; }
+            #inputSection, .github-sync-panel, .action-cell, th:last-child, .button-group { display: none !important; }
             .print-only-header { display: block !important; }
             .signature-block { display: flex !important; justify-content: space-between; }
             table { width: 100%; border: 1px solid #000; }
@@ -150,12 +192,32 @@
                 <button type="submit" class="btn btn-add">✚ Add to List</button>
                 <button type="button" onclick="printReport()" class="btn btn-print">🖨️ Save/Print PDF</button>
                 <button type="button" onclick="triggerPdfImport()" class="btn btn-import">📥 Import PDF File</button>
-                <button type="button" onclick="exportUpdatedCodeFile()" class="btn btn-export">💾 Export Updated HTML</button>
+                <button type="button" onclick="exportUpdatedCodeFile()" class="btn btn-export">💾 Export HTML File</button>
                 <button type="button" onclick="clearList()" class="btn btn-clear">🧹 Clear List</button>
             </div>
             <!-- Hidden file input to upload the PDF file -->
             <input type="file" id="pdfFileInput" accept=".pdf" style="display: none;" onchange="importPdf(event)">
         </form>
+    </div>
+
+    <!-- GitHub Sync Control Panel (Secure & Runs locally in your browser) -->
+    <div class="github-sync-panel">
+        <h4>📦 GitHub Live Sync Settings</h4>
+        <div class="github-grid">
+            <div class="form-group">
+                <label for="ghUser">GitHub Username</label>
+                <input type="text" id="ghUser" placeholder="kemuelcatanbiomed-design" value="kemuelcatanbiomed-design">
+            </div>
+            <div class="form-group">
+                <label for="ghRepo">Repository Name</label>
+                <input type="text" id="ghRepo" placeholder="biomed-portal" value="biomed-portal">
+            </div>
+            <div class="form-group">
+                <label for="ghToken">Personal Access Token (PAT)</label>
+                <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxx">
+            </div>
+        </div>
+        <button type="button" onclick="syncToGitHub()" class="btn-sync">🔄 Save Queue &amp; Update Live GitHub Site</button>
     </div>
 
     <h3>Equipment Queue</h3>
@@ -184,7 +246,7 @@
 
     <!-- The Hidden Metadata Container (Saves raw data directly inside the PDF structure) -->
     <div id="pdfDataBlock" class="pdf-metadata">
-        DATA_BEGINS_HERE:<span id="dataPayload">W3sibmFtZSI6IlZlbnRpbGF0b3IiLCJicmFuZCI6IkNhcmVmdXNpb24iLCJtb2RlbCI6Ik4vQSIsImxvYyI6IlJFU1BJIiwic24iOiJCSlQwMTY0NiIsInNlcnZpY2UiOiJSZXBhaXIifSx7Im5hbWUiOiJWZW50aWxhdG9yIiwiYnJhbmQiOiJDYXJlZnVzaW9uIiwibW9kZWwiOiJOL0EiLCJsb2MiOiJSZXNwaSIsInNuIjoiQkpUMDEwNzUiLCJzZXJ2aWNlIjoiUmVwYWlyIn0seyJuYW1lIjoiVmVudGlsYXRvciIsImJyYW5kIjoiTWluZHJheSIsIm1vZGVsIjoiU1YzMDAiLCJsb2MiOiJSZXNwaSIsInNuIjoiR0ItMDgwMjk2NDciLCJzZXJ2aWNlIjoiUmVwYWlyIn0seyJuYW1lIjoiVmVudGlsYXRvciIsImJyYW5kIjoiVGVjbWUiLCJtb2RlbCI6Ik4vQSIsImxvYyI6IlJlc3BpIiwic24iOiIyMTA3NDAyMDEwODNBMVYiLCJzZXJ2aWNlIjoiUmVwYWlyIn0seyJuYW1lIjoiUGF0aWVudCBNb25pdG9yIiwiYnJhbmQiOiJFZGFuIiwibW9kZWwiOiJpTTcwIiwibG9jIjoiUmVzcGkiLCJzbiI6IjM2MDA4MC1NMTgxMTIxMzAwMTUiLCJzZXJ2aWNlIjoiQ2FsaWJyYXRpb24ifSx7Im5hbWUiOiJFQ0ciLCJicmFuZCI6IldFTENIQUxMWU4iLCJtb2RlbCI6IkNQMTUwIiwibG9jIjoiR0hBIiwic24iOiIxMTAwMDE4MDEyMjIzIiwic2VydmljZSI6IkNhbGlicmF0aW9uIn0seyJuYW1lIjoiUkVGIiwiYnJhbmQiOiJIYWllciIsIm1vZGVsIjoiSFlDLTk0MCIsImxvYyI6IjJORCBGTE9PUiBMQUIiLCJzbiI6IkJFTzNMU0VPTk8wUUpOOVowMDAxIiwic2VydmljZSI6IkNhbGlicmF0aW9uIn0seyJuYW1lIjoiUEFUVUVOVCBNT05JVE9SIiwiYnJhbmQiOiJCaW9uZXQiLCJtb2RlbCI6IkJNNyIsImxvYyI6IlBFRElBIiwic24iOiI2MjJCODQiLCJzZXJ2aWNlIjoiQ2FsaWJyYXRpb24ifSx7Im5hbWUiOiJNYXRlcm5hbCBNb25pdG9yIiwiYnJhbmQiOiJFREFOIiwibW9kZWwiOiJGOUUiLCJsb2MiOiJPQiBXQVJEIiwic24iOiI1NjAwMzlNMjQ3MTMxOTAwMDMiLCJzZXJ2aWNlIjoiQ2FsaWJyYXRpb24ifSx7Im5hbWUiOiJQQVRJRU5UIE1PTklUT1IiLCJicmFuZCI6IkJJT05FVCIsIm1vZGVsIjoiQk03IiwibG9jIjoiT0IgV0FSRCIsInNuIjoiREwwNzAwMTgwIiwic2VydmljZSI6IkNhbGlicmF0aW9uIn0seyJuYW1lIjoiUFVMU0UgT1hJTVRFUiIsImJyYW5kIjoiQ2hvaWNlTWVkIiwibW9kZWwiOiJNRDMwME0iLCJsb2MiOiJFUiIsInNuIjoiMjQwOTAwMjAwNTY5Iiwic2VydmljZSI6IkNhbGlicmF0aW9uIn0seyJuYW1lIjoiVmVudGlsYXRvciIsImJyYW5kIjoiTUlEUkFZIiwibW9kZWwiOiJTVjMwMCIsImxvYyI6IkVSIiwic24iOiJHQjNDMDc4Mzc2Iiwic2VydmljZSI6IkNhbGlicmF0aW9uIn0seyJuYW1lIjoiVkVOVElMQVRPUiIsImJyYW5kIjoiTUlORFJBWSIsIm1vZGVsIjoiU1YzMDAiLCJsb2MiOiJFUiIsInNuIjoiR0I1QzA5NDM1OSIsInNlcnZpY2UiOiJSZXBhaXIifSx7Im5hbWUiOiJQdWxzZSBPeGltZXRlciIsImJyYW5kIjoiQXJtc3Ryb25nIE1lZGljYWwiLCJtb2RlbCI6Ik4vQSIsImxvYyI6IlJFU1BJIiwic24iOiI3MTQzODUyMDkiLCJzZXJ2aWNlIjoiQ2FsaWJyYXRpb24ifSx7Im5hbWUiOiJFQ0cgTUFDSElORSIsImJyYW5kIjoiV2VsY2hBbGx5biIsIm1vZGVsIjoiTi9BIiwibG9jIjoiUmVzcGkiLCJzbiI6IjEwMDAyMzMzMzgyIiwic2VydmljZSI6IkNhbGlicmF0aW9uIn0seyJuYW1lIjoiRUNHIE1BQ0hJTkUiLCJicmFuZCI6IldlbGNoQWxseW4iLCJtb2RlbCI6Ik4vQSIsImxvYyI6IkdIQSIsInNuIjoiMTEwMDAxODAxMjIyMyIsInNlcnZpY2UiOiJDYWxpYnJhdGlvbiJ9LHsibmFtZSI6IlBoYXJtYSBSZWYiLCJicmFuZCI6IkJJT0JBU0UiLCJtb2RlbCI6Ik4vQSIsImxvYyI6IlBIQVJNQUNZIiwic24iOiJHMTcwMTAwNDAwNkJYQy1WNjUwTSIsInNlcnZpY2UiOiJDYWxpYnJhdGlvbiJ9LHsibmFtZSI6IkRlZmlicmlsbGF0b3IiLCJicmFuZCI6IkxpZmVQYWsyMGUiLCJtb2RlbCI6Ik4vQSIsImxvYyI6IlBlZGlhIiwic24iOiI0Nzc0NDYxMDMiLCJzZXJ2aWNlIjoiQ2FsaWJyYXRpb24ifSx7Im5hbWUiOiJQVUxTRSBPWElNRVRFUiIsImJyYW5kIjoiTUFTSU1PIiwibW9kZWwiOiJOL0EiLCJsb2MiOiJFUiIsInNuIjoiNjAwMDE1NTY2Iiwic2VydmljZSI6IkNhbGlicmF0aW9uIn1d</span>:DATA_ENDS_HERE
+        DATA_BEGINS_HERE:<span id="dataPayload"></span>:DATA_ENDS_HERE
     </div>
 </div>
 
@@ -346,7 +408,7 @@
                 "sn": "600015566",
                 "service": "Calibration"
         }
-];
+    ];
 
     // Load from localStorage or fall back to our pre-loaded PDF dataset if empty
     let equipmentList = JSON.parse(localStorage.getItem('savedEquipment'));
@@ -357,8 +419,13 @@
     }
 
     window.onload = function() {
+        // Load GitHub settings from localStorage if available
+        if (localStorage.getItem('gh_username')) document.getElementById('ghUser').value = localStorage.getItem('gh_username');
+        if (localStorage.getItem('gh_repo')) document.getElementById('ghRepo').value = localStorage.getItem('gh_repo');
+        if (localStorage.getItem('gh_token')) document.getElementById('ghToken').value = localStorage.getItem('gh_token');
+        
         renderTable();
-        saveAndRender(); // Generates active PDF metadata string on startup
+        saveAndRender(); 
     };
 
     function addEquipment(event) {
@@ -438,45 +505,121 @@
         window.print();
     }
 
-    // --- AUTO-MODIFY & EXPORT CODE ENGINE ---
+    // Generates the updated code content dynamically
+    function generateUpdatedHtmlContent() {
+        // Clear generated dynamic visual properties temporarily
+        const printDate = document.getElementById('printDate');
+        const tempPrintDateText = printDate.innerText;
+        printDate.innerText = "";
+
+        // Capture raw HTML structure
+        let sourceHtml = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+
+        // Format the active dataset array as a pretty-printed JavaScript string
+        const formattedArray = "const defaultEquipmentDataset = " + JSON.stringify(equipmentList, null, 8) + ";";
+
+        // Regex to slice out the old default dataset block and update it
+        const regexDataset = /const defaultEquipmentDataset = \[\s*[\s\S]*?\s*\];/;
+        sourceHtml = sourceHtml.replace(regexDataset, formattedArray);
+
+        // Clean up the dynamic DOM table rows so the next download starts clean
+        const regexTableBody = /<tbody id="tableBody">[\s\S]*?<\/tbody>/;
+        sourceHtml = sourceHtml.replace(regexTableBody, '<tbody id="tableBody"></tbody>');
+
+        // Restore dynamic dashboard date values
+        printDate.innerText = tempPrintDateText;
+
+        return sourceHtml;
+    }
+
+    // --- AUTO-MODIFY & LOCAL EXPORT CODE ENGINE ---
     function exportUpdatedCodeFile() {
         if (equipmentList.length === 0) {
             alert("Your list is empty! Add some equipment before exporting.");
             return;
         }
-
-        // 1. Temporarily clear generated dynamic visual properties
-        const printDate = document.getElementById('printDate');
-        const tempPrintDateText = printDate.innerText;
-        printDate.innerText = "";
-
-        // 2. Capture the active page's raw HTML structure
-        let sourceHtml = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
-
-        // 3. Format the active dataset array as a pretty-printed JavaScript string
-        const formattedArray = "const defaultEquipmentDataset = " + JSON.stringify(equipmentList, null, 8) + ";";
-
-        // 4. Use Regex to slice out the old default dataset block and drop in the new active list
-        const regexDataset = /const defaultEquipmentDataset = \[\s*[\s\S]*?\s*\];/;
-        sourceHtml = sourceHtml.replace(regexDataset, formattedArray);
-
-        // 5. Clean up the dynamic DOM table rows so the newly downloaded file loads fresh next time
-        const regexTableBody = /<tbody id="tableBody">[\s\S]*?<\/tbody>/;
-        sourceHtml = sourceHtml.replace(regexTableBody, '<tbody id="tableBody"></tbody>');
-
-        // 6. Restore the active dashboard interface values
-        printDate.innerText = tempPrintDateText;
-
-        // 7. Write the updated HTML string out to a new file and trigger the browser download
-        const blob = new Blob([sourceHtml], { type: "text/html;charset=utf-8" });
+        const updatedCode = generateUpdatedHtmlContent();
+        const blob = new Blob([updatedCode], { type: "text/html;charset=utf-8" });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
         link.download = "index.html";
         link.click();
     }
 
-    // --- PDF DIRECT IMPORT & AUTOFILL ENGINE ---
+    // --- DIRECT GITHUB API LIVE UPDATE ENGINE ---
+    async function syncToGitHub() {
+        const owner = document.getElementById('ghUser').value.trim();
+        const repo = document.getElementById('ghRepo').value.trim();
+        const token = document.getElementById('ghToken').value.trim();
+        const path = "index.html"; // The filename in your root directory
 
+        if (!owner || !repo || !token) {
+            alert("⚠️ Please provide your Username, Repo Name, and a valid GitHub Personal Access Token first!");
+            return;
+        }
+
+        // Save settings locally to avoid re-entering them next time
+        localStorage.setItem('gh_username', owner);
+        localStorage.setItem('gh_repo', repo);
+        localStorage.setItem('gh_token', token);
+
+        const btn = document.querySelector('.btn-sync');
+        btn.innerText = "⏳ Connecting to GitHub...";
+        btn.disabled = true;
+
+        try {
+            // Step 1: Fetch current file details from GitHub API to get the required "SHA"
+            const getUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+            const getResponse = await fetch(getUrl, {
+                headers: { "Authorization": `token ${token}` }
+            });
+
+            let sha = null;
+            if (getResponse.ok) {
+                const fileData = await getResponse.json();
+                sha = fileData.sha;
+            } else if (getResponse.status !== 404) {
+                throw new Error("Could not check repo existence. Please verify your token and repo name.");
+            }
+
+            // Step 2: Generate current page code featuring your active list as defaults
+            const finalCode = generateUpdatedHtmlContent();
+            // Encode the file safely to base64 for transmission
+            const base64Content = btoa(unescape(encodeURIComponent(finalCode)));
+
+            // Step 3: Put the updated file back into GitHub
+            const putPayload = {
+                message: "Update equipment queue via portal panel",
+                content: base64Content,
+                branch: "main"
+            };
+            if (sha) putPayload.sha = sha; // Required if updating an existing file
+
+            const putResponse = await fetch(getUrl, {
+                method: "PUT",
+                headers: {
+                    "Authorization": `token ${token}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(putPayload)
+            });
+
+            if (putResponse.ok) {
+                alert("🎉 Success! Your latest equipment list is now saved directly into GitHub index.html. Your live website will update in less than a minute!");
+            } else {
+                const errorInfo = await putResponse.json();
+                throw new Error(errorInfo.message || "Failed to commit files.");
+            }
+
+        } catch (error) {
+            alert("❌ Sync Error: " + error.message);
+        } finally {
+            btn.innerText = "🔄 Save Queue & Update Live GitHub Site";
+            btn.disabled = false;
+        }
+    }
+
+    // --- PDF DIRECT IMPORT & AUTOFILL ENGINE ---
     function triggerPdfImport() {
         document.getElementById('pdfFileInput').value = ''; 
         document.getElementById('pdfFileInput').click();
