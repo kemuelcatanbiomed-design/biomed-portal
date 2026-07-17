@@ -12,9 +12,12 @@
         :root {
             --primary: #4f46e5;
             --primary-hover: #4338ca;
-            --bg-color: #f8fafc;
+            --sidebar-bg: #0b2265; /* Deep blue from reference UI */
+            --sidebar-active: #1e3a8a;
+            --sidebar-text: #93c5fd;
+            --bg-color: #f1f5f9;
             --card-bg: #ffffff;
-            --text-main: #0f172a;
+            --text-main: #1e293b;
             --text-muted: #64748b;
             --border-color: #e2e8f0;
             
@@ -30,10 +33,7 @@
 
             /* Interactive Utilities */
             --success: #10b981;
-            --success-hover: #059669;
             --danger: #ef4444;
-            --danger-hover: #dc2626;
-            --info: #0ea5e9;
             --warning: #f59e0b;
             --warning-hover: #d97706;
         }
@@ -43,56 +43,203 @@
             background-color: var(--bg-color);
             color: var(--text-main);
             margin: 0;
-            padding: 40px 20px;
+            padding: 0;
             display: flex;
-            justify-content: center;
-            align-items: flex-start;
             min-height: 100vh;
             box-sizing: border-box;
+            overflow-x: hidden;
         }
 
-        .container {
-            width: 100%;
-            max-width: 1100px;
+        /* ------------------------------------------------------------- */
+        /* 🧭 SIDEBAR LAYOUT (WITH COLLAPSIBLE ANIMATION)                */
+        /* ------------------------------------------------------------- */
+        .sidebar {
+            width: 260px;
+            background-color: var(--sidebar-bg);
+            color: #ffffff;
             display: flex;
             flex-direction: column;
-            gap: 24px;
+            flex-shrink: 0;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
         }
 
-        .card {
-            background-color: var(--card-bg);
-            padding: 32px;
-            border-radius: 12px;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05), 0 4px 6px -1px rgba(0, 0, 0, 0.02);
-            border: 1px solid var(--border-color);
+        /* Sidebar collapsed state */
+        body.sidebar-hidden .sidebar {
+            width: 0px;
+            border-right: none;
         }
 
-        h2 {
-            font-size: 20px;
+        .sidebar-brand {
+            padding: 24px;
+            font-size: 18px;
             font-weight: 700;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            white-space: nowrap;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 20px 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 24px;
+            color: var(--sidebar-text);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .sidebar-item:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+            color: #ffffff;
+        }
+
+        .sidebar-item.active {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            border-left: 4px solid var(--warning);
+            padding-left: 20px;
+        }
+
+        /* ------------------------------------------------------------- */
+        /* 🖥️ MAIN CONTENT CONTAINER                                     */
+        /* ------------------------------------------------------------- */
+        .main-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+            gap: 24px;
+            overflow-y: auto;
+            width: 100%;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Top Header Area matching Reference UI */
+        .top-navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--card-bg);
+            padding: 16px 24px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            gap: 16px;
+        }
+
+        .header-title-block {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        /* Sidebar Toggle Hamburger Button */
+        .btn-toggle-sidebar {
+            background-color: #f1f5f9;
+            border: 1px solid var(--border-color);
             color: var(--text-main);
-            margin: 0 0 24px 0;
+            padding: 10px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
             display: flex;
             align-items: center;
             gap: 8px;
+            transition: all 0.2s ease;
         }
 
-        h3 {
-            font-size: 18px;
-            font-weight: 600;
+        .btn-toggle-sidebar:hover {
+            background-color: #e2e8f0;
+        }
+
+        .breadcrumb {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .page-title {
+            font-size: 20px;
+            font-weight: 700;
             color: var(--text-main);
-            margin: 0 0 16px 0;
+            margin: 0;
+        }
+
+        .top-navbar-controls {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .system-date {
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        /* ------------------------------------------------------------- */
+        /* ➕ INTAKE FORM STYLING                                        */
+        /* ------------------------------------------------------------- */
+        .card {
+            background-color: var(--card-bg);
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-color);
+        }
+
+        .card-collapsible {
+            max-height: 1000px;
+            opacity: 1;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card-collapsible.collapsed {
+            max-height: 0;
+            padding-top: 0;
+            padding-bottom: 0;
+            margin: 0;
+            opacity: 0;
+            border: none;
+            pointer-events: none;
         }
 
         .form-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            margin-bottom: 24px;
+            gap: 16px;
+            margin-bottom: 20px;
         }
 
-        @media (max-width: 850px) { .form-grid { grid-template-columns: 1fr 1fr; } }
-        @media (max-width: 550px) { .form-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 900px) { .form-grid { grid-template-columns: 1fr 1fr; } }
+        @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
 
         .form-group {
             display: flex;
@@ -101,9 +248,10 @@
         }
 
         label {
-            font-weight: 500;
-            font-size: 13px;
+            font-weight: 600;
+            font-size: 12px;
             color: var(--text-muted);
+            text-transform: uppercase;
         }
 
         input[type="text"], select {
@@ -125,7 +273,7 @@
             box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
         }
 
-        /* Standardized Action Controls */
+        /* Buttons & Utility Controls */
         .button-group {
             display: flex;
             flex-wrap: wrap;
@@ -133,10 +281,10 @@
         }
 
         .btn {
-            padding: 11px 20px;
+            padding: 10px 18px;
             border: none;
             border-radius: 8px;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
@@ -150,57 +298,80 @@
         .btn-add:hover { background-color: var(--primary-hover); }
         .btn-update { background-color: var(--warning); color: white; }
         .btn-update:hover { background-color: var(--warning-hover); }
+        .btn-toggle-form { background-color: var(--primary); color: white; }
+        .btn-toggle-form:hover { background-color: var(--primary-hover); }
+        .btn-toggle-form.active { background-color: #475569; }
         .btn-print { background-color: #fff; color: var(--text-main); border: 1px solid var(--border-color); }
-        .btn-print:hover { background-color: #f1f5f9; border-color: #cbd5e1; }
+        .btn-print:hover { background-color: #f1f5f9; }
         .btn-clear { background-color: transparent; color: var(--danger); border: 1px solid transparent; }
         .btn-clear:hover { background-color: var(--bg-repair); }
-
         .btn-cancel { background-color: transparent; color: var(--text-muted); border: 1px solid var(--border-color); }
-        .btn-cancel:hover { background-color: #f1f5f9; }
 
-        /* Filter Controls Panel */
-        .sort-control-panel {
+        /* ------------------------------------------------------------- */
+        /* 🗂️ TAB SYSTEM STYLING                                         */
+        /* ------------------------------------------------------------- */
+        .tabs-container {
             display: flex;
-            align-items: center;
-            gap: 16px;
-            background-color: #f8fafc;
-            padding: 12px 16px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            margin-bottom: 16px;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 20px;
+            gap: 8px;
+            overflow-x: auto;
         }
 
-        .sort-label {
-            font-size: 13px;
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 12px 18px;
+            font-size: 14px;
             font-weight: 600;
             color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s ease;
             white-space: nowrap;
         }
 
-        .sort-select-wrapper {
-            max-width: 240px;
-            width: 100%;
+        .tab-btn:hover {
+            color: var(--text-main);
         }
 
-        /* Modern Scalable Data Tables */
+        .tab-btn.active {
+            color: var(--primary);
+        }
+
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-color: var(--primary);
+            border-radius: 2px;
+        }
+
+        /* ------------------------------------------------------------- */
+        /* 📊 DATA WORKSPACE & TABLE                                     */
+        /* ------------------------------------------------------------- */
         .table-container {
             overflow-x: auto;
+            overflow-y: auto;
+            max-height: 450px;
             border: 1px solid var(--border-color);
             border-radius: 8px;
         }
 
         table {
             width: 100%;
-            border-collapse: collapse;
+            border-collapse: separate;
+            border-spacing: 0;
             text-align: left;
             background-color: #fff;
         }
 
         th, td {
             padding: 14px 18px;
-            font-size: 14px;
+            font-size: 13.5px;
             border-bottom: 1px solid var(--border-color);
         }
 
@@ -208,9 +379,13 @@
             background-color: #f8fafc;
             font-weight: 600;
             color: var(--text-muted);
-            font-size: 13px;
+            font-size: 12px;
             text-transform: uppercase;
             letter-spacing: 0.05em;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            box-shadow: inset 0 -1px 0 var(--border-color);
         }
 
         tr:last-child td { border-bottom: none; }
@@ -220,8 +395,7 @@
             text-align: right;
             white-space: nowrap;
         }
-        
-        /* Compact Inline Modifier Buttons */
+
         .btn-action-edit {
             background-color: transparent;
             color: var(--warning-hover);
@@ -229,7 +403,7 @@
             padding: 6px 12px;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 500;
             margin-right: 6px;
             transition: all 0.15s ease;
@@ -243,62 +417,98 @@
             padding: 6px 12px;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 500;
             transition: all 0.15s ease;
         }
         .btn-action-delete:hover { background-color: var(--bg-repair); }
-        
-        /* Modernized Badges */
+
         .status-badge {
             display: inline-flex;
             align-items: center;
             padding: 4px 10px;
             border-radius: 9999px;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
             letter-spacing: -0.01em;
         }
 
         .sync-status-wrapper {
-            text-align: center;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 500;
-            min-height: 20px;
+            min-height: 18px;
+            margin-top: -8px;
+            margin-bottom: 4px;
         }
 
+        /* ------------------------------------------------------------- */
+        /* 🖨️ PRINT OPTIMIZATIONS                                       */
+        /* ------------------------------------------------------------- */
         .print-only-header { display: none; text-align: center; border-bottom: 2px solid #000; padding-bottom: 16px; margin-bottom: 30px; }
         .signature-block { display: none; margin-top: 60px; }
         .sig-line { border-top: 1px solid #000; width: 35%; text-align: center; padding-top: 8px; font-size: 12px; font-weight: 500; }
 
         @media print {
-            body { background: white; color: black; padding: 0; margin: 0; }
+            .sidebar { display: none !important; }
+            .main-container { max-width: 100% !important; padding: 0 !important; }
             .card { border: none; box-shadow: none; padding: 0; }
-            #inputSection, .sync-status-wrapper, .action-cell, th:last-child, .button-group, .sort-control-panel { display: none !important; }
+            #inputSection, .top-navbar, .sync-status-wrapper, .action-cell, th:last-child, .tabs-container { display: none !important; }
             .print-only-header { display: block !important; }
             .signature-block { display: flex !important; justify-content: space-between; }
-            table { width: 100%; border: 1px solid #000; border-radius: 0; }
+            .table-container { max-height: none !important; overflow: visible !important; border: none; }
+            table { width: 100%; border: 1px solid #000; }
             th, td { border: 1px solid #000; padding: 10px; color: #000; }
-            th { background-color: #f1f5f9 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            th { position: static !important; background-color: #f1f5f9 !important; }
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <!-- Production Hardcopy Architecture -->
+<!-- SIDEBAR COMPONENT (ONLY HOME REMAINS) -->
+<aside class="sidebar" id="appSidebar">
+    <div class="sidebar-brand">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--warning);"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        Biomedical Core
+    </div>
+    <ul class="sidebar-menu">
+        <a class="sidebar-item active">
+            <span>🏠</span> HOME
+        </a>
+    </ul>
+</aside>
+
+<!-- MAIN APP VIEW -->
+<main class="main-container">
+    
+    <!-- Print Report Header -->
     <div class="print-only-header">
         <h2 style="justify-content: center; font-size: 24px; margin-bottom: 4px;">BIOMEDICAL ENGINEERING DEPARTMENT</h2>
         <h3 style="color: var(--text-muted); margin-bottom: 8px;">Consolidated Equipment Service &amp; Calibration Intake Report</h3>
         <p id="printDate" style="font-size: 13px; margin: 0; color: #000;"></p>
     </div>
 
-    <!-- Intake Operations Node -->
-    <div id="inputSection" class="card">
-        <h2>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-            Medical Equipment Entry Portal
-        </h2>
+    <!-- Reference Layout Top Bar -->
+    <header class="top-navbar">
+        <div class="header-title-block">
+            <!-- Sidebar Toggle Button -->
+            <button class="btn-toggle-sidebar" onclick="toggleSidebar()">
+                <span>☰</span> Menu
+            </button>
+            <div>
+                <div class="breadcrumb">Systems Portal &gt; Equipment Log</div>
+                <h1 class="page-title">Biomedical Flight Deck</h1>
+            </div>
+        </div>
+        <div class="top-navbar-controls">
+            <span class="system-date" id="liveDate">Sun, 12 May 2019</span>
+            <button class="btn btn-toggle-form" id="formToggleBtn" onclick="toggleForm()">
+                <span>➕</span> Entry Form
+            </button>
+        </div>
+    </header>
+
+    <!-- Intake Operations Node (Collapsible Form Card) -->
+    <section id="inputSection" class="card card-collapsible collapsed">
         <form id="equipmentForm" onsubmit="handleFormSubmit(event)">
             <div class="form-grid">
                 <div class="form-group">
@@ -315,7 +525,7 @@
                 </div>
                 <div class="form-group">
                     <label for="location">Location / Ward</label>
-                    <input type="text" id="location" required placeholder="e.g. ICU Bed 4">
+                    <input type="text" id="location" required placeholder="e.g. ER Bed 4">
                 </div>
                 <div class="form-group">
                     <label for="serial">Serial Number (S/N)</label>
@@ -344,27 +554,21 @@
                 <button type="button" onclick="clearList()" class="btn btn-clear">Clear List</button>
             </div>
         </form>
-    </div>
+    </section>
 
-    <!-- Live Sync Diagnostics Terminal -->
+    <!-- Cloud Sync Connection Node -->
     <div class="sync-status-wrapper">
         <span id="syncStatus"></span>
     </div>
 
-    <!-- Enterprise Processing Queue Datatable -->
-    <div class="card">
-        <h3>Equipment Queue</h3>
+    <!-- Active Grid Queue Workspace -->
+    <section class="card">
         
-        <!-- View and Filter Control Selector -->
-        <div class="sort-control-panel">
-            <span class="sort-label">Filter &amp; View Status:</span>
-            <div class="sort-select-wrapper">
-                <select id="tableSortCriteria" onchange="handleFilterChange()">
-                    <option value="all">Show All Equipment (A-Z)</option>
-                    <option value="For Calibration">Only Show: For Calibration</option>
-                    <option value="For Repair">Only Show: For Repair</option>
-                </select>
-            </div>
+        <!-- Simplified Tab System Integration -->
+        <div class="tabs-container">
+            <button class="tab-btn active" onclick="switchTab('all', this)">All Equipment</button>
+            <button class="tab-btn" onclick="switchTab('repair', this)">For Repair</button>
+            <button class="tab-btn" onclick="switchTab('calibration', this)">For Calibration</button>
         </div>
 
         <div class="table-container">
@@ -384,29 +588,63 @@
                 <tbody id="tableBody"></tbody>
             </table>
         </div>
-    </div>
+    </section>
 
+    <!-- Print Form Signature Deck -->
     <div class="signature-block">
         <div class="sig-line">Receiving Technician Signature</div>
         <div class="sig-line">Biomedical Supervisor Approval</div>
     </div>
-</div>
+</main>
 
 <script>
-    // ====================================================================
-    // 🔑 PERMANENT SUPABASE DATABASE CONFIGURATION
-    // ====================================================================
     const SUPABASE_URL = "https://fozlnwmobikzlcyzptvh.supabase.co"; 
     const SUPABASE_KEY = "sb_publishable__a_KwlAK5oMMVKK7avBqaQ_lH8QBY-y"; 
-    // ====================================================================
 
     let equipmentList = [];
     let supabaseClient = null;
     let editingIndex = null; 
+    let activeFilterTab = 'all';
+
+    // Format top card date
+    function updateLiveDate() {
+        const options = { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' };
+        document.getElementById('liveDate').innerText = new Date().toLocaleDateString('en-US', options);
+    }
+
+    // Toggle Sidebar visibility
+    function toggleSidebar() {
+        document.body.classList.toggle('sidebar-hidden');
+    }
+
+    // Interactive collapsible form handling
+    function toggleForm() {
+        const inputSection = document.getElementById('inputSection');
+        const toggleBtn = document.getElementById('formToggleBtn');
+        const isCollapsed = inputSection.classList.contains('collapsed');
+
+        if (isCollapsed) {
+            inputSection.classList.remove('collapsed');
+            toggleBtn.innerHTML = "<span>➖</span> Hide Form";
+            toggleBtn.classList.add('active');
+            document.getElementById('eqName').focus();
+        } else {
+            inputSection.classList.add('collapsed');
+            toggleBtn.innerHTML = "<span>➕</span> Entry Form";
+            toggleBtn.classList.remove('active');
+        }
+    }
+
+    // Dynamic filtering interface logic
+    function switchTab(tabName, element) {
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        element.classList.add('active');
+        activeFilterTab = tabName;
+        renderTable();
+    }
 
     function initializeSupabase() {
         const statusEl = document.getElementById('syncStatus');
-        
         if (SUPABASE_URL !== "YOUR_SUPABASE_PROJECT_URL" && SUPABASE_KEY !== "YOUR_SUPABASE_ANON_PUBLIC_KEY") {
             try {
                 supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -494,10 +732,7 @@
                 if (error) throw error;
 
                 if (data && data[0]) {
-                    equipmentList.push({
-                        id: data[0].id,
-                        ...newItem
-                    });
+                    equipmentList.push({ id: data[0].id, ...newItem });
                 }
                 
                 statusEl.innerHTML = "✅ Record saved directly to Cloud database!";
@@ -505,7 +740,7 @@
                 setTimeout(() => { statusEl.innerHTML = ""; }, 3000);
 
             } catch (err) {
-                alert("Failed to sync to Supabase. Record added locally only.\nError: " + err.message);
+                alert("Failed to sync. Record added locally only.\nError: " + err.message);
                 equipmentList.push({ id: Date.now(), ...newItem });
             }
         } else {
@@ -520,6 +755,11 @@
     function startEdit(index) {
         editingIndex = index;
         const item = equipmentList[index];
+
+        const inputSection = document.getElementById('inputSection');
+        if (inputSection.classList.contains('collapsed')) {
+            toggleForm();
+        }
 
         document.getElementById('eqName').value = item.name;
         document.getElementById('brand').value = item.brand;
@@ -548,8 +788,7 @@
         };
 
         const statusEl = document.getElementById('syncStatus');
-        statusEl.innerHTML = "⏳ Updating record in Supabase...";
-        statusEl.style.color = "var(--primary)";
+        statusEl.innerHTML = "⏳ Updating record...";
 
         if (supabaseClient && item.id) {
             try {
@@ -559,15 +798,12 @@
                     .eq('id', item.id);
 
                 if (error) throw error;
-
                 equipmentList[editingIndex] = { id: item.id, ...updatedItem };
-
-                statusEl.innerHTML = "✅ Record updated successfully in Cloud!";
+                statusEl.innerHTML = "✅ Record updated in Cloud!";
                 statusEl.style.color = "var(--success)";
                 setTimeout(() => { statusEl.innerHTML = ""; }, 3000);
-
             } catch (err) {
-                alert("Could not update Cloud record: " + err.message);
+                alert("Cloud update failure: " + err.message);
                 return;
             }
         } else {
@@ -594,15 +830,12 @@
         const item = equipmentList[index];
         const statusEl = document.getElementById('syncStatus');
 
-        if (!confirm(`Are you sure you want to delete ${item.name} (${item.sn})?`)) return;
+        if (!confirm(`Are you sure you want to delete ${item.name}?`)) return;
 
-        if (editingIndex === index) {
-            cancelEditing();
-        }
+        if (editingIndex === index) cancelEditing();
 
         if (supabaseClient && item.id) {
-            statusEl.innerHTML = "⏳ Removing record from Supabase...";
-            statusEl.style.color = "var(--primary)";
+            statusEl.innerHTML = "⏳ Deleting record...";
             try {
                 const { error } = await supabaseClient
                     .from('equipment')
@@ -610,12 +843,11 @@
                     .eq('id', item.id);
 
                 if (error) throw error;
-
-                statusEl.innerHTML = "✅ Record removed successfully!";
+                statusEl.innerHTML = "✅ Record deleted!";
                 statusEl.style.color = "var(--success)";
                 setTimeout(() => { statusEl.innerHTML = ""; }, 3000);
             } catch (err) {
-                alert("Could not remove from Cloud. Error: " + err.message);
+                alert("Database deletion failed: " + err.message);
                 return;
             }
         }
@@ -626,14 +858,13 @@
     }
 
     async function clearList() {
-        if (!confirm("Are you sure you want to clear the entire database queue?")) return;
+        if (!confirm("Are you sure you want to clear the entire list?")) return;
         
         const statusEl = document.getElementById('syncStatus');
         cancelEditing();
 
         if (supabaseClient) {
-            statusEl.innerHTML = "⏳ Purging Supabase Database...";
-            statusEl.style.color = "var(--danger)";
+            statusEl.innerHTML = "⏳ Purging Database...";
             try {
                 const { error } = await supabaseClient
                     .from('equipment')
@@ -641,12 +872,11 @@
                     .gt('id', 0); 
 
                 if (error) throw error;
-
-                statusEl.innerHTML = "🧹 Supabase and Local Cache cleared!";
+                statusEl.innerHTML = "🧹 Databases Purged!";
                 statusEl.style.color = "var(--success)";
                 setTimeout(() => { statusEl.innerHTML = ""; }, 3000);
             } catch (err) {
-                alert("Could not clear Cloud records: " + err.message);
+                alert("Cloud wipe failed: " + err.message);
                 return;
             }
         }
@@ -662,7 +892,6 @@
 
     function resetIntakeForm() {
         document.getElementById('equipmentForm').reset();
-        document.getElementById('eqName').focus();
     }
 
     function getStatusStyles(status) {
@@ -680,10 +909,6 @@
         }
     }
 
-    function handleFilterChange() {
-        renderTable();
-    }
-
     function renderTable() {
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = "";
@@ -693,33 +918,26 @@
             return;
         }
 
-        // 1. Filter out the matching items based on selected criteria value
-        const filterCriteria = document.getElementById('tableSortCriteria').value;
+        // Apply tab sorting/filters
         let itemsToDisplay = [...equipmentList];
 
-        if (filterCriteria !== 'all') {
-            itemsToDisplay = equipmentList.filter(item => item.service === filterCriteria);
+        if (activeFilterTab === 'repair') {
+            itemsToDisplay = equipmentList.filter(item => item.service === 'For Repair');
+        } else if (activeFilterTab === 'calibration') {
+            itemsToDisplay = equipmentList.filter(item => item.service === 'For Calibration');
         }
 
         if (itemsToDisplay.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 32px; color: var(--text-muted); font-style: italic;">No items match the chosen filter status.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 32px; color: var(--text-muted); font-style: italic;">No items found matching this filter criteria.</td></tr>`;
             return;
         }
 
-        // 2. Sort the remaining visible array items alphabetically by Equipment Name
-        itemsToDisplay.sort((a, b) => {
-            const nameA = (a.name || "").toLowerCase();
-            const nameB = (b.name || "").toLowerCase();
-            return nameA.localeCompare(nameB);
-        });
+        itemsToDisplay.sort((a, b) => (a.name || "").toLowerCase().localeCompare((b.name || "").toLowerCase()));
 
-        // 3. Render only the filtered and sorted items
         itemsToDisplay.forEach((item, index) => {
             const row = document.createElement('tr');
             const statusStyle = getStatusStyles(item.service);
-            
-            // Find structural true global array index context to keep actions working smoothly
-            const dynamicIndex = equipmentList.findIndex(x => x.sn === item.sn && x.id === item.id);
+            const originalIndex = equipmentList.findIndex(x => x.sn === item.sn && x.id === item.id);
 
             row.innerHTML = `
                 <td style="color: var(--text-muted); font-weight: 500;">${index + 1}</td>
@@ -730,8 +948,8 @@
                 <td><code style="font-family: monospace; background: var(--bg-color); padding: 3px 6px; border-radius: 4px; font-size: 13px;">${item.sn}</code></td>
                 <td><span class="status-badge" style="${statusStyle}">${item.service || ''}</span></td>
                 <td class="action-cell">
-                    <button class="btn-action-edit" onclick="startEdit(${dynamicIndex})">Edit</button>
-                    <button class="btn-action-delete" onclick="removeItem(${dynamicIndex})">Delete</button>
+                    <button class="btn-action-edit" onclick="startEdit(${originalIndex})">Edit</button>
+                    <button class="btn-action-delete" onclick="removeItem(${originalIndex})">Delete</button>
                 </td>
             `;
             tbody.appendChild(row);
@@ -739,6 +957,7 @@
     }
 
     window.onload = function() {
+        updateLiveDate();
         const localData = localStorage.getItem('savedEquipment');
         if (localData) {
             equipmentList = JSON.parse(localData);
@@ -749,7 +968,7 @@
 
     function printReport() {
         if (equipmentList.length === 0) {
-            alert("Your equipment list is empty!");
+            alert("The queue is empty!");
             return;
         }
         document.getElementById('printDate').innerText = "Report Generated On: " + new Date().toLocaleString();
