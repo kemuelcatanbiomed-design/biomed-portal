@@ -1,143 +1,299 @@
 <!DOCTYPE html>
-<html lang="en"><head>
+<html lang="en">
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Medical Equipment Intake Portal (Supabase)</title>
     <!-- Include official Supabase JS Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
         :root {
-            --primary: #0056b3;
-            --bg-color: #f4f6f9;
-            --text-color: #333;
-            --border-color: #ddd;
-            --success: #28a745;
-            --info: #17a2b8;
-            --purple: #6f42c1;
-            --danger: #dc3545;
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            
+            /* Status Pill Palette */
+            --bg-calibration: #e0f2fe;
+            --text-calibration: #0369a1;
+            --bg-done-cal: #dcfce7;
+            --text-done-cal: #15803d;
+            --bg-repair: #fee2e2;
+            --text-repair: #b91c1c;
+            --bg-done-rep: #ffedd5;
+            --text-done-rep: #c2410c;
+
+            /* Interactive Utilities */
+            --success: #10b981;
+            --success-hover: #059669;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+            --info: #0ea5e9;
+            --warning: #f59e0b;
+            --warning-hover: #d97706;
         }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
             background-color: var(--bg-color);
-            color: var(--text-color);
+            color: var(--text-main);
             margin: 0;
-            padding: 20px;
+            padding: 40px 20px;
             display: flex;
             justify-content: center;
             align-items: flex-start;
             min-height: 100vh;
-        }
-        .container {
-            background-color: #fff;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 1000px;
             box-sizing: border-box;
         }
-        h2, h3 {
-            text-align: center;
-            color: var(--primary);
-            margin-bottom: 20px;
+
+        .container {
+            width: 100%;
+            max-width: 1100px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
         }
+
+        .card {
+            background-color: var(--card-bg);
+            padding: 32px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05), 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+            border: 1px solid var(--border-color);
+        }
+
         h2 {
-            border-bottom: 2px solid #eaeaea;
-            padding-bottom: 10px;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0 0 24px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
+
+        h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin: 0 0 16px 0;
+        }
+
         .form-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
+            gap: 20px;
+            margin-bottom: 24px;
         }
-        @media (max-width: 800px) { .form-grid { grid-template-columns: 1fr 1fr; } }
-        @media (max-width: 500px) { .form-grid { grid-template-columns: 1fr; } }
-        .form-group { margin-bottom: 5px; }
-        label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 14px; }
-        input[type="text"], input[type="password"], select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 14px; }
-        input[type="text"]:focus, input[type="password"]:focus, select:focus { border-color: var(--primary); outline: none; }
-        
-        .button-group { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
-        .btn { padding: 12px 15px; border: none; border-radius: 4px; font-size: 14px; font-weight: bold; cursor: pointer; transition: background 0.2s; flex: 1; min-width: 120px; }
-        .btn-add { background-color: var(--success); color: white; }
-        .btn-add:hover { background-color: #218838; }
-        .btn-update { background-color: #fd7e14; color: white; }
-        .btn-update:hover { background-color: #e2690f; }
-        .btn-print { background-color: var(--primary); color: white; }
-        .btn-print:hover { background-color: #004085; }
-        .btn-clear { background-color: var(--danger); color: white; }
-        .btn-clear:hover { background-color: #c82333; }
 
-        .table-container { margin-top: 20px; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        th, td { border: 1px solid var(--border-color); padding: 12px; text-align: left; font-size: 14px; }
-        th { background-color: #f8f9fa; font-weight: 600; }
-        .action-cell { text-align: center; white-space: nowrap; }
-        
-        /* Action buttons inside the table */
-        .btn-action-edit { background-color: #ffc107; color: #333; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 12px; font-weight: bold; margin-right: 5px; }
-        .btn-action-edit:hover { background-color: #e0a800; }
-        .btn-action-delete { background-color: var(--danger); color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 12px; font-weight: bold; }
-        .btn-action-delete:hover { background-color: #bd2130; }
-        
-        .print-only-header { display: none; text-align: center; border-bottom: 3px double #333; padding-bottom: 15px; margin-bottom: 25px; }
-        .signature-block { display: none; margin-top: 40px; }
-        .sig-line { border-top: 1px solid #333; width: 40%; text-align: center; padding-top: 5px; font-size: 12px; }
+        @media (max-width: 850px) { .form-grid { grid-template-columns: 1fr 1fr; } }
+        @media (max-width: 550px) { .form-grid { grid-template-columns: 1fr; } }
 
-        /* Sync Status Text style */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        label {
+            font-weight: 500;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        input[type="text"], select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 14px;
+            font-family: inherit;
+            color: var(--text-main);
+            background-color: #fff;
+            transition: all 0.2s ease;
+        }
+
+        input[type="text"]:focus, select:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+        }
+
+        /* Standardized Action Controls */
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 11px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-add { background-color: var(--primary); color: white; }
+        .btn-add:hover { background-color: var(--primary-hover); }
+        .btn-update { background-color: var(--warning); color: white; }
+        .btn-update:hover { background-color: var(--warning-hover); }
+        .btn-print { background-color: #fff; color: var(--text-main); border: 1px solid var(--border-color); }
+        .btn-print:hover { background-color: #f1f5f9; border-color: #cbd5e1; }
+        .btn-clear { background-color: transparent; color: var(--danger); border: 1px solid transparent; }
+        .btn-clear:hover { background-color: var(--bg-repair); }
+
+        .btn-cancel { background-color: transparent; color: var(--text-muted); border: 1px solid var(--border-color); }
+        .btn-cancel:hover { background-color: #f1f5f9; }
+
+        /* Modern Scalable Data Tables */
+        .table-container {
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            background-color: #fff;
+        }
+
+        th, td {
+            padding: 14px 18px;
+            font-size: 14px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: #f8fafc;
+            font-weight: 600;
+            color: var(--text-muted);
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background-color: #f8fafc; }
+
+        .action-cell {
+            text-align: right;
+            white-space: nowrap;
+        }
+        
+        /* Compact Inline Modifier Buttons */
+        .btn-action-edit {
+            background-color: transparent;
+            color: var(--warning-hover);
+            border: 1px solid var(--border-color);
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            margin-right: 6px;
+            transition: all 0.15s ease;
+        }
+        .btn-action-edit:hover { background-color: #fef3c7; border-color: #fde68a; }
+
+        .btn-action-delete {
+            background-color: transparent;
+            color: var(--danger);
+            border: 1px solid transparent;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.15s ease;
+        }
+        .btn-action-delete:hover { background-color: var(--bg-repair); }
+        
+        /* Modernized Badges */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+
         .sync-status-wrapper {
             text-align: center;
-            margin-bottom: 15px;
-            font-size: 14px;
-            font-weight: bold;
+            font-size: 13px;
+            font-weight: 500;
             min-height: 20px;
         }
 
+        .print-only-header { display: none; text-align: center; border-bottom: 2px solid #000; padding-bottom: 16px; margin-bottom: 30px; }
+        .signature-block { display: none; margin-top: 60px; }
+        .sig-line { border-top: 1px solid #000; width: 35%; text-align: center; padding-top: 8px; font-size: 12px; font-weight: 500; }
+
         @media print {
             body { background: white; color: black; padding: 0; margin: 0; }
-            .container { box-shadow: none; max-width: 100%; padding: 0; border: none; }
+            .card { border: none; box-shadow: none; padding: 0; }
             #inputSection, .sync-status-wrapper, .action-cell, th:last-child, .button-group { display: none !important; }
             .print-only-header { display: block !important; }
             .signature-block { display: flex !important; justify-content: space-between; }
-            table { width: 100%; border: 1px solid #000; }
+            table { width: 100%; border: 1px solid #000; border-radius: 0; }
             th, td { border: 1px solid #000; padding: 10px; color: #000; }
-            th { background-color: #eaeaea !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            th { background-color: #f1f5f9 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
     </style>
 </head>
 <body>
 
 <div class="container">
+    <!-- Production Hardcopy Architecture -->
     <div class="print-only-header">
-        <h2>BIOMEDICAL ENGINEERING DEPARTMENT</h2>
-        <h3>Consolidated Equipment Service &amp; Calibration Intake Report</h3>
-        <p id="printDate" style="font-size: 14px; color: #555;"></p>
+        <h2 style="justify-content: center; font-size: 24px; margin-bottom: 4px;">BIOMEDICAL ENGINEERING DEPARTMENT</h2>
+        <h3 style="color: var(--text-muted); margin-bottom: 8px;">Consolidated Equipment Service &amp; Calibration Intake Report</h3>
+        <p id="printDate" style="font-size: 13px; margin: 0; color: #000;"></p>
     </div>
 
-    <div id="inputSection">
-        <h2>Medical Equipment Entry Portal (Supabase)</h2>
+    <!-- Intake Operations Node -->
+    <div id="inputSection" class="card">
+        <h2>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+            Medical Equipment Entry Portal
+        </h2>
         <form id="equipmentForm" onsubmit="handleFormSubmit(event)">
             <div class="form-grid">
                 <div class="form-group">
                     <label for="eqName">Equipment Name</label>
-                    <input type="text" id="eqName" required="" placeholder="e.g. Syringe Pump">
+                    <input type="text" id="eqName" required placeholder="e.g. Syringe Pump">
                 </div>
                 <div class="form-group">
                     <label for="brand">Brand</label>
-                    <input type="text" id="brand" required="" placeholder="e.g. Alaris">
+                    <input type="text" id="brand" required placeholder="e.g. Alaris">
                 </div>
                 <div class="form-group">
                     <label for="model">Model</label>
-                    <input type="text" id="model" required="" placeholder="e.g. 8100">
+                    <input type="text" id="model" required placeholder="e.g. 8100">
                 </div>
                 <div class="form-group">
                     <label for="location">Location / Ward</label>
-                    <input type="text" id="location" required="" placeholder="e.g. ICU Bed 4">
+                    <input type="text" id="location" required placeholder="e.g. ICU Bed 4">
                 </div>
                 <div class="form-group">
                     <label for="serial">Serial Number (S/N)</label>
-                    <input type="text" id="serial" required="" placeholder="e.g. SN-993821">
+                    <input type="text" id="serial" required placeholder="e.g. SN-993821">
                 </div>
                 <div class="form-group">
                     <label for="statusType">Status Type</label>
@@ -150,36 +306,45 @@
                 </div>
             </div>
             <div class="button-group">
-                <button type="submit" id="submitBtn" class="btn btn-add">✚ Add to List</button>
-                <button type="button" id="cancelEditBtn" onclick="cancelEditing()" class="btn btn-clear" style="display: none;">❌ Cancel Edit</button>
-                <button type="button" onclick="printReport()" class="btn btn-print">🖨️ Save/Print PDF</button>
-                <button type="button" onclick="clearList()" class="btn btn-clear">🧹 Clear List</button>
+                <button type="submit" id="submitBtn" class="btn btn-add">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Add to List
+                </button>
+                <button type="button" id="cancelEditBtn" onclick="cancelEditing()" class="btn btn-cancel" style="display: none;">Cancel Edit</button>
+                <button type="button" onclick="printReport()" class="btn btn-print">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                    Save/Print PDF
+                </button>
+                <button type="button" onclick="clearList()" class="btn btn-clear">Clear List</button>
             </div>
         </form>
     </div>
 
-    <!-- Real-time Status Indicator -->
+    <!-- Live Sync Diagnostics Terminal -->
     <div class="sync-status-wrapper">
         <span id="syncStatus"></span>
     </div>
 
-    <h3>Equipment Queue</h3>
-    <div class="table-container">
-        <table id="equipmentTable">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Equipment Name</th>
-                    <th>Brand</th>
-                    <th>Model</th>
-                    <th>Location</th>
-                    <th>Serial Number</th>
-                    <th>Status Type</th>
-                    <th class="action-cell">Actions</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody"></tbody>
-        </table>
+    <!-- Enterprise Processing Queue Datatable -->
+    <div class="card">
+        <h3>Equipment Queue</h3>
+        <div class="table-container">
+            <table id="equipmentTable">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">#</th>
+                        <th>Equipment Name</th>
+                        <th>Brand</th>
+                        <th>Model</th>
+                        <th>Location</th>
+                        <th>Serial Number</th>
+                        <th>Status Type</th>
+                        <th class="action-cell">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
     </div>
 
     <div class="signature-block">
@@ -198,9 +363,8 @@
 
     let equipmentList = [];
     let supabaseClient = null;
-    let editingIndex = null; // Keeps track of the index currently being edited
+    let editingIndex = null; 
 
-    // Connect Client automatically on page load
     function initializeSupabase() {
         const statusEl = document.getElementById('syncStatus');
         
@@ -210,16 +374,15 @@
                 fetchFromSupabase();
             } catch (err) {
                 console.error("Initialization error:", err);
-                statusEl.innerHTML = "⚠️ Configuration Error: Check your URL and API Key codes.";
+                statusEl.innerHTML = "⚠️ Configuration Error: Check URL and API code definitions.";
                 statusEl.style.color = "var(--danger)";
             }
         } else {
-            statusEl.innerHTML = "⚠️ Setup Required: Please edit the HTML file to insert your Supabase URL and API Key.";
+            statusEl.innerHTML = "⚠️ Setup Required: Configure structural Supabase parameters within HTML markup.";
             statusEl.style.color = "var(--danger)";
         }
     }
 
-    // --- READ FROM SUPABASE ---
     async function fetchFromSupabase() {
         const statusEl = document.getElementById('syncStatus');
         if (!supabaseClient) return;
@@ -242,7 +405,7 @@
                 model: item.model,
                 loc: item.loc,
                 sn: item.sn,
-                service: item.service // Map the DB field 'service' to keep system database schema backwards compatible
+                service: item.service 
             }));
 
             renderTable();
@@ -259,7 +422,6 @@
         }
     }
 
-    // --- ROUTE FORM SUBMIT TO EITHER ADD OR UPDATE ---
     function handleFormSubmit(event) {
         event.preventDefault();
         if (editingIndex !== null) {
@@ -269,7 +431,6 @@
         }
     }
 
-    // --- ADD / CREATE IN SUPABASE ---
     async function addEquipment() {
         const newItem = {
             name: document.getElementById('eqName').value,
@@ -317,7 +478,6 @@
         resetIntakeForm();
     }
 
-    // --- POPULATE FORM FOR EDITING ---
     function startEdit(index) {
         editingIndex = index;
         const item = equipmentList[index];
@@ -329,17 +489,14 @@
         document.getElementById('serial').value = item.sn;
         document.getElementById('statusType').value = item.service;
 
-        // Change submit button to look like update state
         const submitBtn = document.getElementById('submitBtn');
-        submitBtn.innerText = "💾 Update Record";
+        submitBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Update Record`;
         submitBtn.className = "btn btn-update";
 
-        // Show cancel button
         document.getElementById('cancelEditBtn').style.display = "inline-block";
         document.getElementById('eqName').focus();
     }
 
-    // --- UPDATE / PUT IN SUPABASE ---
     async function updateEquipment() {
         const item = equipmentList[editingIndex];
         const updatedItem = {
@@ -375,7 +532,6 @@
                 return;
             }
         } else {
-            // Local fallback edit
             equipmentList[editingIndex] = { id: item.id || Date.now(), ...updatedItem };
         }
 
@@ -384,26 +540,23 @@
         cancelEditing();
     }
 
-    // --- RESET EDIT PROCESS ---
     function cancelEditing() {
         editingIndex = null;
         resetIntakeForm();
         
         const submitBtn = document.getElementById('submitBtn');
-        submitBtn.innerText = "✚ Add to List";
+        submitBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add to List`;
         submitBtn.className = "btn btn-add";
         
         document.getElementById('cancelEditBtn').style.display = "none";
     }
 
-    // --- DELETE FROM SUPABASE ---
     async function removeItem(index) {
         const item = equipmentList[index];
         const statusEl = document.getElementById('syncStatus');
 
         if (!confirm(`Are you sure you want to delete ${item.name} (${item.sn})?`)) return;
 
-        // If deleting the item currently under active editing
         if (editingIndex === index) {
             cancelEditing();
         }
@@ -433,7 +586,6 @@
         renderTable();
     }
 
-    // --- CLEAR ALL QUEUE RECORDS ---
     async function clearList() {
         if (!confirm("Are you sure you want to clear the entire database queue?")) return;
         
@@ -465,7 +617,6 @@
         renderTable();
     }
 
-    // Fallback/Local storage backup
     function saveLocalCache() {
         localStorage.setItem('savedEquipment', JSON.stringify(equipmentList));
     }
@@ -475,19 +626,19 @@
         document.getElementById('eqName').focus();
     }
 
-    // Determine status column color
-    function getStatusColor(status) {
+    // Dynamic UI Badge Controller Mapping
+    function getStatusStyles(status) {
         switch(status) {
             case 'For Calibration':
-                return '#0056b3'; // Blue
+                return `background-color: var(--bg-calibration); color: var(--text-calibration);`;
             case 'Done Calibration':
-                return '#17a2b8'; // Light Blue/Teal
+                return `background-color: var(--bg-done-cal); color: var(--text-done-cal);`;
             case 'For Repair':
-                return '#d9534f'; // Red
+                return `background-color: var(--bg-repair); color: var(--text-repair);`;
             case 'Done Repair':
-                return '#fd7e14'; // Orange
+                return `background-color: var(--bg-done-rep); color: var(--text-done-rep);`;
             default:
-                return '#333';
+                return `background-color: var(--border-color); color: var(--text-main);`;
         }
     }
 
@@ -496,21 +647,21 @@
         tbody.innerHTML = "";
 
         if (equipmentList.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: #888; font-style: italic;">No equipment added yet.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 32px; color: var(--text-muted); font-style: italic;">No workflow instances queued in engine context.</td></tr>`;
             return;
         }
 
         equipmentList.forEach((item, index) => {
             const row = document.createElement('tr');
-            const statusColor = getStatusColor(item.service);
+            const statusStyle = getStatusStyles(item.service);
             row.innerHTML = `
-                <td>${index + 1}</td>
-                <td><b>${item.name}</b></td>
+                <td style="color: var(--text-muted); font-weight: 500;">${index + 1}</td>
+                <td><span style="font-weight: 600; color: var(--text-main);">${item.name}</span></td>
                 <td>${item.brand}</td>
                 <td>${item.model}</td>
                 <td>${item.loc}</td>
-                <td><code>${item.sn}</code></td>
-                <td style="font-weight: 600; color: ${statusColor}">${item.service || ''}</td>
+                <td><code style="font-family: monospace; background: var(--bg-color); padding: 3px 6px; border-radius: 4px; font-size: 13px;">${item.sn}</code></td>
+                <td><span class="status-badge" style="${statusStyle}">${item.service || ''}</span></td>
                 <td class="action-cell">
                     <button class="btn-action-edit" onclick="startEdit(${index})">Edit</button>
                     <button class="btn-action-delete" onclick="removeItem(${index})">Delete</button>
@@ -520,14 +671,12 @@
         });
     }
 
-    // Page Load Process
     window.onload = function() {
         const localData = localStorage.getItem('savedEquipment');
         if (localData) {
             equipmentList = JSON.parse(localData);
             renderTable();
         }
-
         initializeSupabase();
     };
 
@@ -541,4 +690,5 @@
     }
 </script>
 
-</body></html>
+</body>
+</html>
