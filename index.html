@@ -158,6 +158,32 @@
         .btn-cancel { background-color: transparent; color: var(--text-muted); border: 1px solid var(--border-color); }
         .btn-cancel:hover { background-color: #f1f5f9; }
 
+        /* Filter Controls Panel */
+        .sort-control-panel {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background-color: #f8fafc;
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 16px;
+        }
+
+        .sort-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            white-space: nowrap;
+        }
+
+        .sort-select-wrapper {
+            max-width: 240px;
+            width: 100%;
+        }
+
         /* Modern Scalable Data Tables */
         .table-container {
             overflow-x: auto;
@@ -248,7 +274,7 @@
         @media print {
             body { background: white; color: black; padding: 0; margin: 0; }
             .card { border: none; box-shadow: none; padding: 0; }
-            #inputSection, .sync-status-wrapper, .action-cell, th:last-child, .button-group { display: none !important; }
+            #inputSection, .sync-status-wrapper, .action-cell, th:last-child, .button-group, .sort-control-panel { display: none !important; }
             .print-only-header { display: block !important; }
             .signature-block { display: flex !important; justify-content: space-between; }
             table { width: 100%; border: 1px solid #000; border-radius: 0; }
@@ -328,6 +354,19 @@
     <!-- Enterprise Processing Queue Datatable -->
     <div class="card">
         <h3>Equipment Queue</h3>
+        
+        <!-- View and Filter Control Selector -->
+        <div class="sort-control-panel">
+            <span class="sort-label">Filter &amp; View Status:</span>
+            <div class="sort-select-wrapper">
+                <select id="tableSortCriteria" onchange="handleFilterChange()">
+                    <option value="all">Show All Equipment (A-Z)</option>
+                    <option value="For Calibration">Only Show: For Calibration</option>
+                    <option value="For Repair">Only Show: For Repair</option>
+                </select>
+            </div>
+        </div>
+
         <div class="table-container">
             <table id="equipmentTable">
                 <thead>
@@ -626,7 +665,6 @@
         document.getElementById('eqName').focus();
     }
 
-    // Dynamic UI Badge Controller Mapping
     function getStatusStyles(status) {
         switch(status) {
             case 'For Calibration':
@@ -642,6 +680,10 @@
         }
     }
 
+    function handleFilterChange() {
+        renderTable();
+    }
+
     function renderTable() {
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = "";
@@ -651,9 +693,34 @@
             return;
         }
 
-        equipmentList.forEach((item, index) => {
+        // 1. Filter out the matching items based on selected criteria value
+        const filterCriteria = document.getElementById('tableSortCriteria').value;
+        let itemsToDisplay = [...equipmentList];
+
+        if (filterCriteria !== 'all') {
+            itemsToDisplay = equipmentList.filter(item => item.service === filterCriteria);
+        }
+
+        if (itemsToDisplay.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 32px; color: var(--text-muted); font-style: italic;">No items match the chosen filter status.</td></tr>`;
+            return;
+        }
+
+        // 2. Sort the remaining visible array items alphabetically by Equipment Name
+        itemsToDisplay.sort((a, b) => {
+            const nameA = (a.name || "").toLowerCase();
+            const nameB = (b.name || "").toLowerCase();
+            return nameA.localeCompare(nameB);
+        });
+
+        // 3. Render only the filtered and sorted items
+        itemsToDisplay.forEach((item, index) => {
             const row = document.createElement('tr');
             const statusStyle = getStatusStyles(item.service);
+            
+            // Find structural true global array index context to keep actions working smoothly
+            const dynamicIndex = equipmentList.findIndex(x => x.sn === item.sn && x.id === item.id);
+
             row.innerHTML = `
                 <td style="color: var(--text-muted); font-weight: 500;">${index + 1}</td>
                 <td><span style="font-weight: 600; color: var(--text-main);">${item.name}</span></td>
@@ -663,8 +730,8 @@
                 <td><code style="font-family: monospace; background: var(--bg-color); padding: 3px 6px; border-radius: 4px; font-size: 13px;">${item.sn}</code></td>
                 <td><span class="status-badge" style="${statusStyle}">${item.service || ''}</span></td>
                 <td class="action-cell">
-                    <button class="btn-action-edit" onclick="startEdit(${index})">Edit</button>
-                    <button class="btn-action-delete" onclick="removeItem(${index})">Delete</button>
+                    <button class="btn-action-edit" onclick="startEdit(${dynamicIndex})">Edit</button>
+                    <button class="btn-action-delete" onclick="removeItem(${dynamicIndex})">Delete</button>
                 </td>
             `;
             tbody.appendChild(row);
