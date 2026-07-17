@@ -212,8 +212,8 @@
     // ====================================================================
     const GITHUB_USERNAME = "kemuelcatanbiomed-design"; 
     const GITHUB_REPO = "biomed-portal";
-    const GITHUB_PAT = "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"; // 👈 Paste your GitHub Personal Access Token here!
-    const DATABASE_FILE_PATH = "data.json";       // The JSON file updated on your GitHub
+    const GITHUB_PAT = "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"; 
+    const DATABASE_FILE_PATH = "data.json";       
     // ====================================================================
 
     // Initialize PDF.js worker
@@ -359,7 +359,6 @@
 
         const statusEl = document.getElementById('syncStatus');
 
-        // Check credentials configuration
         if (!owner || !repo || !token || token.includes("yourActualTokenHere") || token.includes("ghp_xxxx")) {
             if (statusEl) {
                 statusEl.innerHTML = "⚠️ Configuration incomplete. Please insert your actual GitHub Personal Access Token (PAT) inside the script config.";
@@ -374,25 +373,29 @@
         }
 
         try {
-            // Step 1: Retrieve the SHA identifier of data.json currently on GitHub
             const getUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
             const getResponse = await fetch(getUrl, {
-                headers: { "Authorization": `token ${token}` }
+                headers: { 
+                    "Authorization": `Bearer ${token}`,
+                    "Accept": "application/vnd.github.v3+json"
+                }
             });
 
             let sha = null;
             if (getResponse.ok) {
                 const fileData = await getResponse.json();
                 sha = fileData.sha;
-            } else if (getResponse.status !== 404) {
-                throw new Error("Unable to contact GitHub repository.");
+            } else if (getResponse.status === 404) {
+                // File doesn't exist yet, which is fine; we will build it.
+                sha = null;
+            } else {
+                const errorData = await getResponse.json().catch(() => ({ message: "Unknown error" }));
+                throw new Error(`GitHub responded with status ${getResponse.status}: ${errorData.message}`);
             }
 
-            // Step 2: Structure updated JSON string and convert to Base64
             const dbDataString = JSON.stringify(equipmentList, null, 4);
             const base64Content = btoa(unescape(encodeURIComponent(dbDataString)));
 
-            // Step 3: Put/Write updated file back to the master branch
             const putPayload = {
                 message: "Database updated dynamically via Biomed-Portal",
                 content: base64Content,
@@ -403,8 +406,9 @@
             const putResponse = await fetch(getUrl, {
                 method: "PUT",
                 headers: {
-                    "Authorization": `token ${token}`,
-                    "Content-Type": "application/json"
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                    "Accept": "application/vnd.github.v3+json"
                 },
                 body: JSON.stringify(putPayload)
             });
@@ -416,8 +420,8 @@
                     setTimeout(() => { statusEl.innerHTML = ""; }, 4000);
                 }
             } else {
-                const errorInfo = await putResponse.json();
-                throw new Error(errorInfo.message || "Failed pushing database change.");
+                const errorInfo = await putResponse.json().catch(() => ({ message: "Write rejected" }));
+                throw new Error(`GitHub Write Status ${putResponse.status}: ${errorInfo.message}`);
             }
 
         } catch (error) {
@@ -425,6 +429,7 @@
                 statusEl.innerHTML = "❌ Database Auto-Sync Failed: " + error.message;
                 statusEl.style.color = "var(--danger)";
             }
+            console.error("Full Sync Error Context:", error);
         }
     }
 
