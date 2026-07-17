@@ -225,7 +225,7 @@
     function initializeSupabase() {
         const statusEl = document.getElementById('syncStatus');
         
-        if (SUPABASE_URL !== "YOUR_SUPABASE_PROJECT_URL" && SUPABASE_KEY !== "YOUR_SUPABASE_ANON_PUBLIC_KEY") {
+        if (SUPABASE_URL !== "https://fozlnwmobikzlcyzptvh.supabase.co" && SUPABASE_KEY !== "sb_publishable__a_KwlAK5oMMVKK7avBqaQ_lH8QBY-y") {
             try {
                 supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
                 fetchFromSupabase();
