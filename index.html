@@ -3,8 +3,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Medical Equipment Intake Portal (Supabase)</title>
-    <!-- Include PDF.js Library for direct PDF parsing -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
     <!-- Include official Supabase JS Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -64,12 +62,10 @@
         .btn { padding: 12px 15px; border: none; border-radius: 4px; font-size: 14px; font-weight: bold; cursor: pointer; transition: background 0.2s; flex: 1; min-width: 120px; }
         .btn-add { background-color: var(--success); color: white; }
         .btn-add:hover { background-color: #218838; }
+        .btn-update { background-color: #fd7e14; color: white; }
+        .btn-update:hover { background-color: #e2690f; }
         .btn-print { background-color: var(--primary); color: white; }
         .btn-print:hover { background-color: #004085; }
-        .btn-import { background-color: var(--info); color: white; }
-        .btn-import:hover { background-color: #138496; }
-        .btn-export { background-color: var(--purple); color: white; }
-        .btn-export:hover { background-color: #5930a4; }
         .btn-clear { background-color: var(--danger); color: white; }
         .btn-clear:hover { background-color: #c82333; }
 
@@ -77,9 +73,13 @@
         table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
         th, td { border: 1px solid var(--border-color); padding: 12px; text-align: left; font-size: 14px; }
         th { background-color: #f8f9fa; font-weight: 600; }
-        .action-cell { text-align: center; }
-        .btn-delete { background-color: #ffc107; color: #333; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 12px; font-weight: bold; }
-        .btn-delete:hover { background-color: #e0a800; }
+        .action-cell { text-align: center; white-space: nowrap; }
+        
+        /* Action buttons inside the table */
+        .btn-action-edit { background-color: #ffc107; color: #333; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 12px; font-weight: bold; margin-right: 5px; }
+        .btn-action-edit:hover { background-color: #e0a800; }
+        .btn-action-delete { background-color: var(--danger); color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .btn-action-delete:hover { background-color: #bd2130; }
         
         .print-only-header { display: none; text-align: center; border-bottom: 3px double #333; padding-bottom: 15px; margin-bottom: 25px; }
         .signature-block { display: none; margin-top: 40px; }
@@ -94,19 +94,6 @@
             min-height: 20px;
         }
 
-        /* Robust Invisible Metadata Block inside PDF */
-        .pdf-metadata {
-            display: none;
-            position: absolute;
-            left: -9999px;
-            top: -9999px;
-            width: 1px;
-            height: 1px;
-            overflow: hidden;
-            font-size: 8px;
-            color: #000000;
-        }
-
         @media print {
             body { background: white; color: black; padding: 0; margin: 0; }
             .container { box-shadow: none; max-width: 100%; padding: 0; border: none; }
@@ -116,7 +103,6 @@
             table { width: 100%; border: 1px solid #000; }
             th, td { border: 1px solid #000; padding: 10px; color: #000; }
             th { background-color: #eaeaea !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .pdf-metadata { display: block !important; }
         }
     </style>
 </head>
@@ -131,7 +117,7 @@
 
     <div id="inputSection">
         <h2>Medical Equipment Entry Portal (Supabase)</h2>
-        <form id="equipmentForm" onsubmit="addEquipment(event)">
+        <form id="equipmentForm" onsubmit="handleFormSubmit(event)">
             <div class="form-grid">
                 <div class="form-group">
                     <label for="eqName">Equipment Name</label>
@@ -154,21 +140,21 @@
                     <input type="text" id="serial" required="" placeholder="e.g. SN-993821">
                 </div>
                 <div class="form-group">
-                    <label for="serviceType">Service Requirement</label>
-                    <select id="serviceType">
-                        <option value="Calibration">Calibration</option>
-                        <option value="Repair">Repair / Maintenance</option>
+                    <label for="statusType">Status Type</label>
+                    <select id="statusType">
+                        <option value="For Calibration">For Calibration</option>
+                        <option value="For Repair">For Repair</option>
+                        <option value="Done Calibration">Done Calibration</option>
+                        <option value="Done Repair">Done Repair</option>
                     </select>
                 </div>
             </div>
             <div class="button-group">
-                <button type="submit" class="btn btn-add">✚ Add to List</button>
+                <button type="submit" id="submitBtn" class="btn btn-add">✚ Add to List</button>
+                <button type="button" id="cancelEditBtn" onclick="cancelEditing()" class="btn btn-clear" style="display: none;">❌ Cancel Edit</button>
                 <button type="button" onclick="printReport()" class="btn btn-print">🖨️ Save/Print PDF</button>
-                <button type="button" onclick="triggerPdfImport()" class="btn btn-import">📥 Import PDF File</button>
-                <button type="button" onclick="exportLocalJson()" class="btn btn-export">💾 Export data.json</button>
                 <button type="button" onclick="clearList()" class="btn btn-clear">🧹 Clear List</button>
             </div>
-            <input type="file" id="pdfFileInput" accept=".pdf" style="display: none;" onchange="importPdf(event)">
         </form>
     </div>
 
@@ -188,8 +174,8 @@
                     <th>Model</th>
                     <th>Location</th>
                     <th>Serial Number</th>
-                    <th>Service Type</th>
-                    <th class="action-cell">Action</th>
+                    <th>Status Type</th>
+                    <th class="action-cell">Actions</th>
                 </tr>
             </thead>
             <tbody id="tableBody"></tbody>
@@ -200,32 +186,25 @@
         <div class="sig-line">Receiving Technician Signature</div>
         <div class="sig-line">Biomedical Supervisor Approval</div>
     </div>
-
-    <!-- The Hidden Metadata Container -->
-    <div id="pdfDataBlock" class="pdf-metadata">
-        DATA_BEGINS_HERE:<span id="dataPayload"></span>:DATA_ENDS_HERE
-    </div>
 </div>
 
 <script>
-    // Initialize PDF.js worker
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
-
     // ====================================================================
     // 🔑 PERMANENT SUPABASE DATABASE CONFIGURATION
     // ====================================================================
-    const SUPABASE_URL = "https://fozlnwmobikzlcyzptvh.supabase.co"; // <-- Paste your Supabase Project URL here
-    const SUPABASE_KEY = "sb_publishable__a_KwlAK5oMMVKK7avBqaQ_lH8QBY-y"; // <-- Paste your Anon Public API Key here
+    const SUPABASE_URL = "https://fozlnwmobikzlcyzptvh.supabase.co"; 
+    const SUPABASE_KEY = "sb_publishable__a_KwlAK5oMMVKK7avBqaQ_lH8QBY-y"; 
     // ====================================================================
 
     let equipmentList = [];
     let supabaseClient = null;
+    let editingIndex = null; // Keeps track of the index currently being edited
 
     // Connect Client automatically on page load
     function initializeSupabase() {
         const statusEl = document.getElementById('syncStatus');
         
-        if (SUPABASE_URL !== "https://fozlnwmobikzlcyzptvh.supabase.co" && SUPABASE_KEY !== "sb_publishable__a_KwlAK5oMMVKK7avBqaQ_lH8QBY-y") {
+        if (SUPABASE_URL !== "YOUR_SUPABASE_PROJECT_URL" && SUPABASE_KEY !== "YOUR_SUPABASE_ANON_PUBLIC_KEY") {
             try {
                 supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
                 fetchFromSupabase();
@@ -263,7 +242,7 @@
                 model: item.model,
                 loc: item.loc,
                 sn: item.sn,
-                service: item.service
+                service: item.service // Map the DB field 'service' to keep system database schema backwards compatible
             }));
 
             renderTable();
@@ -280,17 +259,25 @@
         }
     }
 
-    // --- WRITE TO SUPABASE ---
-    async function addEquipment(event) {
+    // --- ROUTE FORM SUBMIT TO EITHER ADD OR UPDATE ---
+    function handleFormSubmit(event) {
         event.preventDefault();
+        if (editingIndex !== null) {
+            updateEquipment();
+        } else {
+            addEquipment();
+        }
+    }
 
+    // --- ADD / CREATE IN SUPABASE ---
+    async function addEquipment() {
         const newItem = {
             name: document.getElementById('eqName').value,
             brand: document.getElementById('brand').value,
             model: document.getElementById('model').value,
             loc: document.getElementById('location').value,
             sn: document.getElementById('serial').value,
-            service: document.getElementById('serviceType').value
+            service: document.getElementById('statusType').value
         };
 
         const statusEl = document.getElementById('syncStatus');
@@ -327,14 +314,99 @@
 
         saveLocalCache();
         renderTable();
-        document.getElementById('equipmentForm').reset();
+        resetIntakeForm();
+    }
+
+    // --- POPULATE FORM FOR EDITING ---
+    function startEdit(index) {
+        editingIndex = index;
+        const item = equipmentList[index];
+
+        document.getElementById('eqName').value = item.name;
+        document.getElementById('brand').value = item.brand;
+        document.getElementById('model').value = item.model;
+        document.getElementById('location').value = item.loc;
+        document.getElementById('serial').value = item.sn;
+        document.getElementById('statusType').value = item.service;
+
+        // Change submit button to look like update state
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.innerText = "💾 Update Record";
+        submitBtn.className = "btn btn-update";
+
+        // Show cancel button
+        document.getElementById('cancelEditBtn').style.display = "inline-block";
         document.getElementById('eqName').focus();
     }
 
-    // --- REMOVE FROM SUPABASE ---
+    // --- UPDATE / PUT IN SUPABASE ---
+    async function updateEquipment() {
+        const item = equipmentList[editingIndex];
+        const updatedItem = {
+            name: document.getElementById('eqName').value,
+            brand: document.getElementById('brand').value,
+            model: document.getElementById('model').value,
+            loc: document.getElementById('location').value,
+            sn: document.getElementById('serial').value,
+            service: document.getElementById('statusType').value
+        };
+
+        const statusEl = document.getElementById('syncStatus');
+        statusEl.innerHTML = "⏳ Updating record in Supabase...";
+        statusEl.style.color = "var(--primary)";
+
+        if (supabaseClient && item.id) {
+            try {
+                const { error } = await supabaseClient
+                    .from('equipment')
+                    .update(updatedItem)
+                    .eq('id', item.id);
+
+                if (error) throw error;
+
+                equipmentList[editingIndex] = { id: item.id, ...updatedItem };
+
+                statusEl.innerHTML = "✅ Record updated successfully in Cloud!";
+                statusEl.style.color = "var(--success)";
+                setTimeout(() => { statusEl.innerHTML = ""; }, 3000);
+
+            } catch (err) {
+                alert("Could not update Cloud record: " + err.message);
+                return;
+            }
+        } else {
+            // Local fallback edit
+            equipmentList[editingIndex] = { id: item.id || Date.now(), ...updatedItem };
+        }
+
+        saveLocalCache();
+        renderTable();
+        cancelEditing();
+    }
+
+    // --- RESET EDIT PROCESS ---
+    function cancelEditing() {
+        editingIndex = null;
+        resetIntakeForm();
+        
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.innerText = "✚ Add to List";
+        submitBtn.className = "btn btn-add";
+        
+        document.getElementById('cancelEditBtn').style.display = "none";
+    }
+
+    // --- DELETE FROM SUPABASE ---
     async function removeItem(index) {
         const item = equipmentList[index];
         const statusEl = document.getElementById('syncStatus');
+
+        if (!confirm(`Are you sure you want to delete ${item.name} (${item.sn})?`)) return;
+
+        // If deleting the item currently under active editing
+        if (editingIndex === index) {
+            cancelEditing();
+        }
 
         if (supabaseClient && item.id) {
             statusEl.innerHTML = "⏳ Removing record from Supabase...";
@@ -361,11 +433,12 @@
         renderTable();
     }
 
-    // --- CLEAR EVERYTHING ---
+    // --- CLEAR ALL QUEUE RECORDS ---
     async function clearList() {
         if (!confirm("Are you sure you want to clear the entire database queue?")) return;
         
         const statusEl = document.getElementById('syncStatus');
+        cancelEditing();
 
         if (supabaseClient) {
             statusEl.innerHTML = "⏳ Purging Supabase Database...";
@@ -395,10 +468,26 @@
     // Fallback/Local storage backup
     function saveLocalCache() {
         localStorage.setItem('savedEquipment', JSON.stringify(equipmentList));
-        if (equipmentList.length > 0) {
-            document.getElementById('dataPayload').innerText = btoa(unescape(encodeURIComponent(JSON.stringify(equipmentList))));
-        } else {
-            document.getElementById('dataPayload').innerText = "";
+    }
+
+    function resetIntakeForm() {
+        document.getElementById('equipmentForm').reset();
+        document.getElementById('eqName').focus();
+    }
+
+    // Determine status column color
+    function getStatusColor(status) {
+        switch(status) {
+            case 'For Calibration':
+                return '#0056b3'; // Blue
+            case 'Done Calibration':
+                return '#17a2b8'; // Light Blue/Teal
+            case 'For Repair':
+                return '#d9534f'; // Red
+            case 'Done Repair':
+                return '#fd7e14'; // Orange
+            default:
+                return '#333';
         }
     }
 
@@ -413,6 +502,7 @@
 
         equipmentList.forEach((item, index) => {
             const row = document.createElement('tr');
+            const statusColor = getStatusColor(item.service);
             row.innerHTML = `
                 <td>${index + 1}</td>
                 <td><b>${item.name}</b></td>
@@ -420,8 +510,11 @@
                 <td>${item.model}</td>
                 <td>${item.loc}</td>
                 <td><code>${item.sn}</code></td>
-                <td style="font-weight: 600; color: ${item.service === 'Calibration' ? '#0056b3' : '#d9534f'}">${item.service}</td>
-                <td class="action-cell"><button class="btn-delete" onclick="removeItem(${index})">Remove</button></td>
+                <td style="font-weight: 600; color: ${statusColor}">${item.service || ''}</td>
+                <td class="action-cell">
+                    <button class="btn-action-edit" onclick="startEdit(${index})">Edit</button>
+                    <button class="btn-action-delete" onclick="removeItem(${index})">Delete</button>
+                </td>
             `;
             tbody.appendChild(row);
         });
@@ -433,7 +526,6 @@
         if (localData) {
             equipmentList = JSON.parse(localData);
             renderTable();
-            saveLocalCache();
         }
 
         initializeSupabase();
@@ -446,98 +538,6 @@
         }
         document.getElementById('printDate').innerText = "Report Generated On: " + new Date().toLocaleString();
         window.print();
-    }
-
-    function exportLocalJson() {
-        if (equipmentList.length === 0) {
-            alert("Your database is empty!");
-            return;
-        }
-        const jsonString = JSON.stringify(equipmentList, null, 4);
-        const blob = new Blob([jsonString], { type: "application/json;charset=utf-8" });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = "data.json";
-        link.click();
-    }
-
-    function triggerPdfImport() {
-        document.getElementById('pdfFileInput').value = ''; 
-        document.getElementById('pdfFileInput').click();
-    }
-
-    // --- PDF DIRECT IMPORT TO SUPABASE ---
-    function importPdf(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = async function(e) {
-            const typedarray = new Uint8Array(e.target.result);
-            try {
-                const pdf = await pdfjsLib.getDocument(typedarray).promise;
-                let fullText = "";
-
-                for (let i = 1; i <= pdf.numPages; i++) {
-                    const page = await pdf.getPage(i);
-                    const textContent = await page.getTextContent();
-                    const pageText = textContent.items.map(item => item.str).join(" ");
-                    fullText += pageText + " ";
-                }
-
-                const match = fullText.match(/DATA_BEGINS_HERE:\s*([A-Za-z0-9+/=]+)\s*:DATA_ENDS_HERE/);
-
-                if (match && match[1]) {
-                    const base64Str = match[1].replace(/\s/g, ''); 
-                    const decodedJson = decodeURIComponent(escape(atob(base64Str)));
-                    const importedList = JSON.parse(decodedJson);
-
-                    if (Array.isArray(importedList) && importedList.length > 0) {
-                        const merge = confirm("Do you want to MERGE this PDF list with your Supabase database?\n(Click 'Cancel' to overwrite your current view.)");
-                        
-                        if (supabaseClient) {
-                            const dbPayload = importedList.map(item => ({
-                                name: item.name,
-                                brand: item.brand,
-                                model: item.model,
-                                loc: item.loc,
-                                sn: item.sn,
-                                service: item.service
-                            }));
-
-                            if (!merge) {
-                                await supabaseClient.from('equipment').delete().gt('id', 0);
-                            }
-
-                            const { data, error } = await supabaseClient.from('equipment').insert(dbPayload).select();
-                            if (error) throw error;
-                            
-                            await fetchFromSupabase(); 
-                        } else {
-                            equipmentList = merge ? equipmentList.concat(importedList) : importedList;
-                            saveLocalCache();
-                            renderTable();
-                        }
-
-                        const lastItem = importedList[importedList.length - 1];
-                        document.getElementById('eqName').value = lastItem.name || "";
-                        document.getElementById('brand').value = lastItem.brand || "";
-                        document.getElementById('model').value = lastItem.model || "";
-                        document.getElementById('location').value = lastItem.loc || "";
-                        document.getElementById('serial').value = lastItem.sn || "";
-                        document.getElementById('serviceType').value = lastItem.service || "Calibration";
-
-                        alert("🎉 PDF Imported! Data synchronized directly with Supabase.");
-                    }
-                } else {
-                    alert("No compatible metadata found inside this PDF.");
-                }
-            } catch (err) {
-                console.error(err);
-                alert("Could not process PDF. " + err.message);
-            }
-        };
-        reader.readAsArrayBuffer(file);
     }
 </script>
 
