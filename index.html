@@ -2,9 +2,11 @@
 <html lang="en"><head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Medical Equipment Intake Portal</title>
+    <title>Medical Equipment Intake Portal (Supabase)</title>
     <!-- Include PDF.js Library for direct PDF parsing -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <!-- Include official Supabase JS Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --primary: #0056b3;
@@ -128,7 +130,7 @@
     </div>
 
     <div id="inputSection">
-        <h2>Medical Equipment Entry Portal</h2>
+        <h2>Medical Equipment Entry Portal (Supabase)</h2>
         <form id="equipmentForm" onsubmit="addEquipment(event)">
             <div class="form-grid">
                 <div class="form-group">
@@ -166,7 +168,6 @@
                 <button type="button" onclick="exportLocalJson()" class="btn btn-export">💾 Export data.json</button>
                 <button type="button" onclick="clearList()" class="btn btn-clear">🧹 Clear List</button>
             </div>
-            <!-- Hidden file input to upload the PDF file -->
             <input type="file" id="pdfFileInput" accept=".pdf" style="display: none;" onchange="importPdf(event)">
         </form>
     </div>
@@ -207,57 +208,83 @@
 </div>
 
 <script>
-    // ====================================================================
-    // 🔑 SECURE DATABASE CONFIGURATION
-    // ====================================================================
-    const GITHUB_USERNAME = "kemuelcatanbiomed-design"; 
-    const GITHUB_REPO = "biomed-portal";
-    const GITHUB_PAT = "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"; 
-    const DATABASE_FILE_PATH = "data.json";       
-    // ====================================================================
-
     // Initialize PDF.js worker
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
-    let equipmentList = [];
+    // ====================================================================
+    // 🔑 PERMANENT SUPABASE DATABASE CONFIGURATION
+    // ====================================================================
+    const SUPABASE_URL = "https://fozlnwmobikzlcyzptvh.supabase.co"; // <-- Paste your Supabase Project URL here
+    const SUPABASE_KEY = "sb_publishable__a_KwlAK5oMMVKK7avBqaQ_lH8QBY-y"; // <-- Paste your Anon Public API Key here
+    // ====================================================================
 
-    // --- DYNAMIC DATA LOAD ENGINE ---
-    window.onload = async function() {
+    let equipmentList = [];
+    let supabaseClient = null;
+
+    // Connect Client automatically on page load
+    function initializeSupabase() {
         const statusEl = document.getElementById('syncStatus');
         
-        // 1. Try to load local cache first for instant UI response
-        const localData = localStorage.getItem('savedEquipment');
-        if (localData) {
-            equipmentList = JSON.parse(localData);
-            renderTable();
-            saveAndRender();
-        }
-
-        // 2. Fetch fresh live database data from your GitHub hosted data.json
-        try {
-            const response = await fetch(DATABASE_FILE_PATH);
-            if (response.ok) {
-                const freshData = await response.json();
-                if (Array.isArray(freshData) && freshData.length > 0) {
-                    equipmentList = freshData;
-                    renderTable();
-                    saveAndRender();
-                    if (statusEl) {
-                        statusEl.innerHTML = "📂 Dynamic database connected & synchronized!";
-                        statusEl.style.color = "var(--success)";
-                        setTimeout(() => { statusEl.innerHTML = ""; }, 3000);
-                    }
-                }
+        if (SUPABASE_URL !== "https://fozlnwmobikzlcyzptvh.supabase.co" && SUPABASE_KEY !== "sb_publishable__a_KwlAK5oMMVKK7avBqaQ_lH8QBY-y") {
+            try {
+                supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                fetchFromSupabase();
+            } catch (err) {
+                console.error("Initialization error:", err);
+                statusEl.innerHTML = "⚠️ Configuration Error: Check your URL and API Key codes.";
+                statusEl.style.color = "var(--danger)";
             }
-        } catch (err) {
-            console.log("Offline mode or running locally. Using local cache.");
+        } else {
+            statusEl.innerHTML = "⚠️ Setup Required: Please edit the HTML file to insert your Supabase URL and API Key.";
+            statusEl.style.color = "var(--danger)";
         }
-    };
+    }
 
-    function addEquipment(event) {
+    // --- READ FROM SUPABASE ---
+    async function fetchFromSupabase() {
+        const statusEl = document.getElementById('syncStatus');
+        if (!supabaseClient) return;
+
+        statusEl.innerHTML = "⏳ Fetching live records from Supabase...";
+        statusEl.style.color = "var(--primary)";
+
+        try {
+            const { data, error } = await supabaseClient
+                .from('equipment')
+                .select('*')
+                .order('id', { ascending: true });
+
+            if (error) throw error;
+
+            equipmentList = data.map(item => ({
+                id: item.id,
+                name: item.name,
+                brand: item.brand,
+                model: item.model,
+                loc: item.loc,
+                sn: item.sn,
+                service: item.service
+            }));
+
+            renderTable();
+            saveLocalCache();
+            
+            statusEl.innerHTML = "✅ Supabase connected & fully synced!";
+            statusEl.style.color = "var(--success)";
+            setTimeout(() => { statusEl.innerHTML = ""; }, 3000);
+
+        } catch (err) {
+            statusEl.innerHTML = "❌ Supabase Sync Failed: " + err.message;
+            statusEl.style.color = "var(--danger)";
+            console.error(err);
+        }
+    }
+
+    // --- WRITE TO SUPABASE ---
+    async function addEquipment(event) {
         event.preventDefault();
 
-        const item = {
+        const newItem = {
             name: document.getElementById('eqName').value,
             brand: document.getElementById('brand').value,
             model: document.getElementById('model').value,
@@ -266,20 +293,108 @@
             service: document.getElementById('serviceType').value
         };
 
-        equipmentList.push(item);
-        saveAndRender();
+        const statusEl = document.getElementById('syncStatus');
+        statusEl.innerHTML = "⏳ Adding record to Supabase...";
+        statusEl.style.color = "var(--primary)";
+
+        if (supabaseClient) {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('equipment')
+                    .insert([newItem])
+                    .select();
+
+                if (error) throw error;
+
+                if (data && data[0]) {
+                    equipmentList.push({
+                        id: data[0].id,
+                        ...newItem
+                    });
+                }
+                
+                statusEl.innerHTML = "✅ Record saved directly to Cloud database!";
+                statusEl.style.color = "var(--success)";
+                setTimeout(() => { statusEl.innerHTML = ""; }, 3000);
+
+            } catch (err) {
+                alert("Failed to sync to Supabase. Record added locally only.\nError: " + err.message);
+                equipmentList.push({ id: Date.now(), ...newItem });
+            }
+        } else {
+            equipmentList.push({ id: Date.now(), ...newItem });
+        }
+
+        saveLocalCache();
+        renderTable();
         document.getElementById('equipmentForm').reset();
         document.getElementById('eqName').focus();
-        
-        // Auto-sync directly to your GitHub data.json
-        autoSyncToGitHub();
     }
 
-    function saveAndRender() {
-        localStorage.setItem('savedEquipment', JSON.stringify(equipmentList));
+    // --- REMOVE FROM SUPABASE ---
+    async function removeItem(index) {
+        const item = equipmentList[index];
+        const statusEl = document.getElementById('syncStatus');
+
+        if (supabaseClient && item.id) {
+            statusEl.innerHTML = "⏳ Removing record from Supabase...";
+            statusEl.style.color = "var(--primary)";
+            try {
+                const { error } = await supabaseClient
+                    .from('equipment')
+                    .delete()
+                    .eq('id', item.id);
+
+                if (error) throw error;
+
+                statusEl.innerHTML = "✅ Record removed successfully!";
+                statusEl.style.color = "var(--success)";
+                setTimeout(() => { statusEl.innerHTML = ""; }, 3000);
+            } catch (err) {
+                alert("Could not remove from Cloud. Error: " + err.message);
+                return;
+            }
+        }
+
+        equipmentList.splice(index, 1);
+        saveLocalCache();
         renderTable();
+    }
+
+    // --- CLEAR EVERYTHING ---
+    async function clearList() {
+        if (!confirm("Are you sure you want to clear the entire database queue?")) return;
         
-        // Encode data list to Base64 inside hidden PDF element
+        const statusEl = document.getElementById('syncStatus');
+
+        if (supabaseClient) {
+            statusEl.innerHTML = "⏳ Purging Supabase Database...";
+            statusEl.style.color = "var(--danger)";
+            try {
+                const { error } = await supabaseClient
+                    .from('equipment')
+                    .delete()
+                    .gt('id', 0); 
+
+                if (error) throw error;
+
+                statusEl.innerHTML = "🧹 Supabase and Local Cache cleared!";
+                statusEl.style.color = "var(--success)";
+                setTimeout(() => { statusEl.innerHTML = ""; }, 3000);
+            } catch (err) {
+                alert("Could not clear Cloud records: " + err.message);
+                return;
+            }
+        }
+
+        equipmentList = [];
+        localStorage.removeItem('savedEquipment');
+        renderTable();
+    }
+
+    // Fallback/Local storage backup
+    function saveLocalCache() {
+        localStorage.setItem('savedEquipment', JSON.stringify(equipmentList));
         if (equipmentList.length > 0) {
             document.getElementById('dataPayload').innerText = btoa(unescape(encodeURIComponent(JSON.stringify(equipmentList))));
         } else {
@@ -312,20 +427,17 @@
         });
     }
 
-    function removeItem(index) {
-        equipmentList.splice(index, 1);
-        saveAndRender();
-        autoSyncToGitHub();
-    }
-
-    function clearList() {
-        if (confirm("Are you sure you want to clear the entire database queue?")) {
-            equipmentList = [];
-            localStorage.removeItem('savedEquipment');
+    // Page Load Process
+    window.onload = function() {
+        const localData = localStorage.getItem('savedEquipment');
+        if (localData) {
+            equipmentList = JSON.parse(localData);
             renderTable();
-            autoSyncToGitHub();
+            saveLocalCache();
         }
-    }
+
+        initializeSupabase();
+    };
 
     function printReport() {
         if (equipmentList.length === 0) {
@@ -336,7 +448,6 @@
         window.print();
     }
 
-    // --- MANUAL LOCAL BACKUP EXPORT ---
     function exportLocalJson() {
         if (equipmentList.length === 0) {
             alert("Your database is empty!");
@@ -350,95 +461,12 @@
         link.click();
     }
 
-    // --- LIVE GITHUB DB AUTO-SYNC ENGINE ---
-    async function autoSyncToGitHub() {
-        const owner = GITHUB_USERNAME.trim();
-        const repo = GITHUB_REPO.trim();
-        const token = GITHUB_PAT.trim();
-        const path = DATABASE_FILE_PATH; 
-
-        const statusEl = document.getElementById('syncStatus');
-
-        if (!owner || !repo || !token || token.includes("yourActualTokenHere") || token.includes("ghp_xxxx")) {
-            if (statusEl) {
-                statusEl.innerHTML = "⚠️ Configuration incomplete. Please insert your actual GitHub Personal Access Token (PAT) inside the script config.";
-                statusEl.style.color = "var(--danger)";
-            }
-            return;
-        }
-
-        if (statusEl) {
-            statusEl.innerHTML = "⏳ Syncing database changes to GitHub (data.json)...";
-            statusEl.style.color = "var(--primary)";
-        }
-
-        try {
-            const getUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
-            const getResponse = await fetch(getUrl, {
-                headers: { 
-                    "Authorization": `Bearer ${token}`,
-                    "Accept": "application/vnd.github.v3+json"
-                }
-            });
-
-            let sha = null;
-            if (getResponse.ok) {
-                const fileData = await getResponse.json();
-                sha = fileData.sha;
-            } else if (getResponse.status === 404) {
-                // File doesn't exist yet, which is fine; we will build it.
-                sha = null;
-            } else {
-                const errorData = await getResponse.json().catch(() => ({ message: "Unknown error" }));
-                throw new Error(`GitHub responded with status ${getResponse.status}: ${errorData.message}`);
-            }
-
-            const dbDataString = JSON.stringify(equipmentList, null, 4);
-            const base64Content = btoa(unescape(encodeURIComponent(dbDataString)));
-
-            const putPayload = {
-                message: "Database updated dynamically via Biomed-Portal",
-                content: base64Content,
-                branch: "main"
-            };
-            if (sha) putPayload.sha = sha;
-
-            const putResponse = await fetch(getUrl, {
-                method: "PUT",
-                headers: {
-                    "Authorization": `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                    "Accept": "application/vnd.github.v3+json"
-                },
-                body: JSON.stringify(putPayload)
-            });
-
-            if (putResponse.ok) {
-                if (statusEl) {
-                    statusEl.innerHTML = "✅ Live GitHub Database (data.json) Updated Successfully!";
-                    statusEl.style.color = "var(--success)";
-                    setTimeout(() => { statusEl.innerHTML = ""; }, 4000);
-                }
-            } else {
-                const errorInfo = await putResponse.json().catch(() => ({ message: "Write rejected" }));
-                throw new Error(`GitHub Write Status ${putResponse.status}: ${errorInfo.message}`);
-            }
-
-        } catch (error) {
-            if (statusEl) {
-                statusEl.innerHTML = "❌ Database Auto-Sync Failed: " + error.message;
-                statusEl.style.color = "var(--danger)";
-            }
-            console.error("Full Sync Error Context:", error);
-        }
-    }
-
-    // --- PDF DIRECT IMPORT ENGINE ---
     function triggerPdfImport() {
         document.getElementById('pdfFileInput').value = ''; 
         document.getElementById('pdfFileInput').click();
     }
 
+    // --- PDF DIRECT IMPORT TO SUPABASE ---
     function importPdf(event) {
         const file = event.target.files[0];
         if (!file) return;
@@ -465,16 +493,32 @@
                     const importedList = JSON.parse(decodedJson);
 
                     if (Array.isArray(importedList) && importedList.length > 0) {
-                        if (confirm("Do you want to MERGE this imported PDF list with your current active queue?\n(Click 'Cancel' to OVERWRITE your queue entirely.)")) {
-                            equipmentList = equipmentList.concat(importedList);
-                        } else {
-                            equipmentList = importedList;
-                        }
+                        const merge = confirm("Do you want to MERGE this PDF list with your Supabase database?\n(Click 'Cancel' to overwrite your current view.)");
                         
-                        saveAndRender();
-                        autoSyncToGitHub();
+                        if (supabaseClient) {
+                            const dbPayload = importedList.map(item => ({
+                                name: item.name,
+                                brand: item.brand,
+                                model: item.model,
+                                loc: item.loc,
+                                sn: item.sn,
+                                service: item.service
+                            }));
 
-                        // AUTOFILL FORM FIELDS
+                            if (!merge) {
+                                await supabaseClient.from('equipment').delete().gt('id', 0);
+                            }
+
+                            const { data, error } = await supabaseClient.from('equipment').insert(dbPayload).select();
+                            if (error) throw error;
+                            
+                            await fetchFromSupabase(); 
+                        } else {
+                            equipmentList = merge ? equipmentList.concat(importedList) : importedList;
+                            saveLocalCache();
+                            renderTable();
+                        }
+
                         const lastItem = importedList[importedList.length - 1];
                         document.getElementById('eqName').value = lastItem.name || "";
                         document.getElementById('brand').value = lastItem.brand || "";
@@ -483,18 +527,15 @@
                         document.getElementById('serial').value = lastItem.sn || "";
                         document.getElementById('serviceType').value = lastItem.service || "Calibration";
 
-                        alert("🎉 PDF Imported! Queue populated and web form automatically filled with the latest equipment record.");
-                    } else {
-                        alert("Metadata was found but it contains no valid records.");
+                        alert("🎉 PDF Imported! Data synchronized directly with Supabase.");
                     }
                 } else {
-                    alert("This PDF doesn't contain restorable portal data. Make sure it was generated using this specific updated dashboard.");
+                    alert("No compatible metadata found inside this PDF.");
                 }
             } catch (err) {
                 console.error(err);
-                alert("Could not process this file. Please make sure you are uploading a valid, uncorrupted PDF.");
+                alert("Could not process PDF. " + err.message);
             }
-            event.target.value = '';
         };
         reader.readAsArrayBuffer(file);
     }
