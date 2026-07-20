@@ -8,18 +8,191 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- Link to External Stylesheet -->
     <link rel="stylesheet" href="styles.css">
-</head>
-<body>
+    <style>
+        /* Sidebar layout updates */
+        .sidebar-menu a {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 500;
+            border-radius: 4px;
+            margin-bottom: 4px;
+        }
+        .sidebar-menu a.active {
+            background: var(--bg-calibration);
+            color: var(--primary);
+        }
 
-<!-- SIDEBAR COMPONENT (ONLY HOME REMAINS) -->
+        /* History Button Styling matching the attachment layout */
+        .btn-action-history {
+            background-color: #ebf2ff;
+            color: #1865f2;
+            border: 1px solid #d0e1fd;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 13px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-right: 4px;
+        }
+        .btn-action-history:hover {
+            background-color: #dbe7ff;
+        }
+
+        /* Modal Architecture Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+        .modal-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal-card {
+            background: #ffffff;
+            border-radius: 8px;
+            width: 95%;
+            max-width: 750px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+            display: flex;
+            flex-direction: column;
+            max-height: 90vh;
+        }
+        .modal-header {
+            padding: 16px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-title {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: #111827;
+        }
+        .btn-close-modal {
+            background: transparent;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #9ca3af;
+        }
+        .modal-body {
+            padding: 16px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        
+        /* History Form and Logs Design with 7 specific field nodes */
+        .history-form-block {
+            background: #f9fafb;
+            padding: 16px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            margin-bottom: 16px;
+        }
+        .history-form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .history-form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .history-form-group label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #4b5563;
+            margin-bottom: 4px;
+        }
+        .history-form-group input, .history-form-group select, .history-form-group textarea {
+            padding: 6px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        .history-list-wrapper {
+            border-top: 1px solid #f3f4f6;
+            padding-top: 12px;
+        }
+        .history-item {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 10px;
+            position: relative;
+        }
+        .history-grid-output {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            font-size: 13px;
+            margin-top: 6px;
+        }
+        .history-item-actions {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+        }
+        .btn-hist-mini {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 12px;
+            margin-left: 8px;
+            font-weight: 500;
+        }
+        .btn-hist-edit { color: #d97706; }
+        .btn-hist-delete { color: #dc2626; }
+        
+        /* View Context Hiding Elements */
+        .mgmt-only {
+            display: none;
+        }
+        body.view-mgmt .mgmt-only {
+            display: inline-block;
+        }
+        body.view-mgmt .home-only {
+            display: none !important;
+        }
+    </style>
+</head>
+<body class="view-home">
+
+<!-- SIDEBAR COMPONENT -->
 <aside class="sidebar" id="appSidebar">
     <div class="sidebar-brand">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--warning);"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
         Biomedical Core
     </div>
     <ul class="sidebar-menu">
-        <a class="sidebar-item active">
+        <a id="navHome" class="sidebar-item active" onclick="navigateTo('home')">
             <span>🏠</span> HOME
+        </a>
+        <a id="navMgmt" class="sidebar-item" onclick="navigateTo('mgmt')">
+            <span>⚙️</span> EQUIPMENT MANAGEMENT
         </a>
     </ul>
 </aside>
@@ -37,25 +210,24 @@
     <!-- Reference Layout Top Bar -->
     <header class="top-navbar">
         <div class="header-title-block">
-            <!-- Sidebar Toggle Button -->
             <button class="btn-toggle-sidebar" onclick="toggleSidebar()">
                 <span>☰</span> Menu
             </button>
             <div>
-                <div class="breadcrumb">Systems Portal &gt; Equipment Log</div>
-                <h1 class="page-title">Biomedical Unit</h1>
+                <div class="breadcrumb">Systems Portal &gt; <span id="breadViewName">Equipment History Queue</span></div>
+                <h1 class="page-title" id="mainPageTitle">Biomedical Unit (History Log Portal)</h1>
             </div>
         </div>
         <div class="top-navbar-controls">
             <span class="system-date" id="liveDate">Sun, 12 May 2019</span>
-            <button class="btn btn-toggle-form" id="formToggleBtn" onclick="toggleForm()">
+            <button class="btn btn-toggle-form mgmt-only" id="formToggleBtn" onclick="toggleForm()">
                 <span>➕</span> Entry Form
             </button>
         </div>
     </header>
 
-    <!-- Intake Operations Node (Collapsible Form Card) -->
-    <section id="inputSection" class="card card-collapsible collapsed">
+    <!-- Intake Operations Form Card -->
+    <section id="inputSection" class="card card-collapsible collapsed mgmt-only" style="width: 100%;">
         <form id="equipmentForm" onsubmit="handleFormSubmit(event)">
             <div class="form-grid">
                 <div class="form-group">
@@ -110,8 +282,6 @@
 
     <!-- Active Grid Queue Workspace -->
     <section class="card">
-        
-        <!-- Simplified Tab System Integration -->
         <div class="tabs-container">
             <button class="tab-btn active" onclick="switchTab('all', this)">All Equipment</button>
             <button class="tab-btn" onclick="switchTab('repair', this)">For Repair</button>
@@ -129,7 +299,7 @@
                         <th>Location</th>
                         <th>Serial Number</th>
                         <th>Status Type</th>
-                        <th class="action-cell">Actions</th>
+                        <th class="action-cell" style="min-width: 200px;">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody"></tbody>
@@ -144,14 +314,92 @@
     </div>
 </main>
 
+<!-- SERVICE HISTORY LOG MODAL DIALOG CONTAINER -->
+<div class="modal-overlay" id="historyModal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 class="modal-title" id="modalTargetTitle">Equipment History Logs</h3>
+            <button class="btn-close-modal" onclick="closeHistoryModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            
+            <!-- Context Aware History Form Block (Hidden on Home Screen View) -->
+            <div class="history-form-block" id="historyFormBlock">
+                <h4 style="margin: 0 0 12px 0; font-size: 14px; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px;" id="histFormTitle">Record Maintenance/Damage Incident</h4>
+                
+                <div class="history-form-grid">
+                    <div class="history-form-group">
+                        <label for="histDateDamaged">Date Damaged / Reported</label>
+                        <input type="date" id="histDateDamaged" required>
+                    </div>
+                    <div class="history-form-group">
+                        <label for="histDateRepaired">Date Repaired</label>
+                        <input type="date" id="histDateRepaired">
+                    </div>
+                </div>
+
+                <div class="history-form-grid">
+                    <div class="history-form-group">
+                        <label for="histDamageDesc">Damage Description</label>
+                        <textarea id="histDamageDesc" rows="2" placeholder="Describe findings/issues..."></textarea>
+                    </div>
+                    <div class="history-form-group">
+                        <label for="histRepairDetails">Repair Details</label>
+                        <textarea id="histRepairDetails" rows="2" placeholder="Actions taken to fix issue..."></textarea>
+                    </div>
+                </div>
+
+                <div class="history-form-grid">
+                    <div class="history-form-group">
+                        <label for="histServiceCompany">Service Company</label>
+                        <input type="text" id="histServiceCompany" placeholder="Internal / External Vendor name">
+                    </div>
+                    <div class="history-form-group">
+                        <label for="histRepairedBy">Repaired By:</label>
+                        <input type="text" id="histRepairedBy" placeholder="Technician name">
+                    </div>
+                </div>
+
+                <div class="history-form-grid" style="grid-template-columns: 1fr;">
+                    <div class="history-form-group">
+                        <label for="histStatus">Status</label>
+                        <select id="histStatus">
+                            <option value="Pending Repair">Pending Repair</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Repaired & Functional">Repaired & Functional</option>
+                            <option value="Beyond Economical Repair (BER)">Beyond Economical Repair (BER)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="text-align: right; margin-top: 12px;">
+                    <button type="button" id="btnCancelHistEdit" onclick="resetHistoryForm()" style="padding: 6px 12px; border-radius:4px; border:1px solid #d1d5db; background:#fff; margin-right:6px; cursor:pointer; display:none;">Cancel</button>
+                    <button type="button" id="btnSaveHist" onclick="saveHistoryEntry()" style="padding:6px 16px; background:var(--primary); color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:500;">Save Entry</button>
+                </div>
+            </div>
+
+            <!-- Historical Log List Timeline Output -->
+            <div class="history-list-wrapper">
+                <h4 style="margin: 0 0 12px 0; font-size: 14px; color: var(--text-main);">Historical Timeline Logs</h4>
+                <div id="historyEntriesContainer"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     const SUPABASE_URL = "https://fozlnwmobikzlcyzptvh.supabase.co"; 
     const SUPABASE_KEY = "sb_publishable__a_KwlAK5oMMVKK7avBqaQ_lH8QBY-y"; 
 
     let equipmentList = [];
+    let currentEquipmentHistory = []; 
     let supabaseClient = null;
     let editingIndex = null; 
     let activeFilterTab = 'all';
+    let currentViewMode = 'home';
+
+    let currentHistoryTargetEquipmentId = null;
+    let editingHistoryRowId = null; 
 
     function updateLiveDate() {
         const options = { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' };
@@ -160,6 +408,28 @@
 
     function toggleSidebar() {
         document.body.classList.toggle('sidebar-hidden');
+    }
+
+    function navigateTo(view) {
+        currentViewMode = view;
+        document.querySelectorAll('.sidebar-menu a').forEach(el => el.classList.remove('active'));
+        
+        if (view === 'home') {
+            document.body.className = "view-home";
+            document.getElementById('navHome').classList.add('active');
+            document.getElementById('breadViewName').innerText = "Equipment History Queue";
+            document.getElementById('mainPageTitle').innerText = "Biomedical Unit (History Log Portal)";
+            
+            document.getElementById('inputSection').classList.add('collapsed');
+            document.getElementById('formToggleBtn').innerHTML = "<span>➕</span> Entry Form";
+            document.getElementById('formToggleBtn').classList.remove('active');
+        } else {
+            document.body.className = "view-mgmt";
+            document.getElementById('navMgmt').classList.add('active');
+            document.getElementById('breadViewName').innerText = "Asset Core Configuration";
+            document.getElementById('mainPageTitle').innerText = "Biomedical Unit Inventory Management";
+        }
+        renderTable();
     }
 
     function toggleForm() {
@@ -194,11 +464,11 @@
                 fetchFromSupabase();
             } catch (err) {
                 console.error("Initialization error:", err);
-                statusEl.innerHTML = "⚠️ Configuration Error: Check URL and API code definitions.";
+                statusEl.innerHTML = "⚠️ Configuration Error: Check API setup configurations.";
                 statusEl.style.color = "var(--danger)";
             }
         } else {
-            statusEl.innerHTML = "⚠️ Setup Required: Configure structural Supabase parameters within HTML markup.";
+            statusEl.innerHTML = "⚠️ Setup Required: Configure structural Supabase parameters.";
             statusEl.style.color = "var(--danger)";
         }
     }
@@ -207,7 +477,7 @@
         const statusEl = document.getElementById('syncStatus');
         if (!supabaseClient) return;
 
-        statusEl.innerHTML = "⏳ Fetching live records from Supabase...";
+        statusEl.innerHTML = "⏳ Fetching equipment records from Supabase...";
         statusEl.style.color = "var(--primary)";
 
         try {
@@ -225,20 +495,19 @@
                 model: item.model,
                 loc: item.loc,
                 sn: item.sn,
-                service: item.service 
+                service: item.service
             }));
 
             renderTable();
-            saveLocalCache();
+            localStorage.setItem('savedEquipment', JSON.stringify(equipmentList));
             
-            statusEl.innerHTML = "✅ Supabase connected & fully synced!";
+            statusEl.innerHTML = "✅ Connected & synced with Supabase!";
             statusEl.style.color = "var(--success)";
             setTimeout(() => { statusEl.innerHTML = ""; }, 3000);
 
         } catch (err) {
-            statusEl.innerHTML = "❌ Supabase Sync Failed: " + err.message;
+            statusEl.innerHTML = "❌ Supabase Fetch Failed: " + err.message;
             statusEl.style.color = "var(--danger)";
-            console.error(err);
         }
     }
 
@@ -262,8 +531,7 @@
         };
 
         const statusEl = document.getElementById('syncStatus');
-        statusEl.innerHTML = "⏳ Adding record to Supabase...";
-        statusEl.style.color = "var(--primary)";
+        statusEl.innerHTML = "⏳ Adding record to database...";
 
         if (supabaseClient) {
             try {
@@ -273,24 +541,20 @@
                     .select();
 
                 if (error) throw error;
-
-                if (data && data[0]) {
-                    equipmentList.push({ id: data[0].id, ...newItem });
-                }
+                if (data && data[0]) equipmentList.push(data[0]);
                 
-                statusEl.innerHTML = "✅ Record saved directly to Cloud database!";
+                statusEl.innerHTML = "✅ Record successfully added!";
                 statusEl.style.color = "var(--success)";
                 setTimeout(() => { statusEl.innerHTML = ""; }, 3000);
-
             } catch (err) {
-                alert("Failed to sync. Record added locally only.\nError: " + err.message);
-                equipmentList.push({ id: Date.now(), ...newItem });
+                alert("Database insert failed: " + err.message);
+                return;
             }
         } else {
             equipmentList.push({ id: Date.now(), ...newItem });
         }
 
-        saveLocalCache();
+        localStorage.setItem('savedEquipment', JSON.stringify(equipmentList));
         renderTable();
         resetIntakeForm();
     }
@@ -299,8 +563,7 @@
         editingIndex = index;
         const item = equipmentList[index];
 
-        const inputSection = document.getElementById('inputSection');
-        if (inputSection.classList.contains('collapsed')) {
+        if (document.getElementById('inputSection').classList.contains('collapsed')) {
             toggleForm();
         }
 
@@ -312,11 +575,9 @@
         document.getElementById('statusType').value = item.service;
 
         const submitBtn = document.getElementById('submitBtn');
-        submitBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Update Record`;
+        submitBtn.innerHTML = `⚙️ Update Record`;
         submitBtn.className = "btn btn-update";
-
         document.getElementById('cancelEditBtn').style.display = "inline-block";
-        document.getElementById('eqName').focus();
     }
 
     async function updateEquipment() {
@@ -331,7 +592,6 @@
         };
 
         const statusEl = document.getElementById('syncStatus');
-        statusEl.innerHTML = "⏳ Updating record...";
 
         if (supabaseClient && item.id) {
             try {
@@ -342,18 +602,18 @@
 
                 if (error) throw error;
                 equipmentList[editingIndex] = { id: item.id, ...updatedItem };
-                statusEl.innerHTML = "✅ Record updated in Cloud!";
+                statusEl.innerHTML = "✅ Record updated successfully!";
                 statusEl.style.color = "var(--success)";
                 setTimeout(() => { statusEl.innerHTML = ""; }, 3000);
             } catch (err) {
-                alert("Cloud update failure: " + err.message);
+                alert("Cloud update error: " + err.message);
                 return;
             }
         } else {
-            equipmentList[editingIndex] = { id: item.id || Date.now(), ...updatedItem };
+            equipmentList[editingIndex] = { id: item.id, ...updatedItem };
         }
 
-        saveLocalCache();
+        localStorage.setItem('savedEquipment', JSON.stringify(equipmentList));
         renderTable();
         cancelEditing();
     }
@@ -361,76 +621,45 @@
     function cancelEditing() {
         editingIndex = null;
         resetIntakeForm();
-        
         const submitBtn = document.getElementById('submitBtn');
-        submitBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add to List`;
+        submitBtn.innerHTML = `➕ Add to List`;
         submitBtn.className = "btn btn-add";
-        
         document.getElementById('cancelEditBtn').style.display = "none";
     }
 
     async function removeItem(index) {
         const item = equipmentList[index];
-        const statusEl = document.getElementById('syncStatus');
-
-        if (!confirm(`Are you sure you want to delete ${item.name}?`)) return;
-
-        if (editingIndex === index) cancelEditing();
+        if (!confirm(`Permanently remove ${item.name}?`)) return;
 
         if (supabaseClient && item.id) {
-            statusEl.innerHTML = "⏳ Deleting record...";
             try {
-                const { error } = await supabaseClient
-                    .from('equipment')
-                    .delete()
-                    .eq('id', item.id);
-
+                const { error } = await supabaseClient.from('equipment').delete().eq('id', item.id);
                 if (error) throw error;
-                statusEl.innerHTML = "✅ Record deleted!";
-                statusEl.style.color = "var(--success)";
-                setTimeout(() => { statusEl.innerHTML = ""; }, 3000);
             } catch (err) {
-                alert("Database deletion failed: " + err.message);
+                alert("Deletion error: " + err.message);
                 return;
             }
         }
 
         equipmentList.splice(index, 1);
-        saveLocalCache();
+        localStorage.setItem('savedEquipment', JSON.stringify(equipmentList));
         renderTable();
     }
 
     async function clearList() {
-        if (!confirm("Are you sure you want to clear the entire list?")) return;
-        
-        const statusEl = document.getElementById('syncStatus');
-        cancelEditing();
-
+        if (!confirm("Are you sure you want to drop the entire inventory data profile?")) return;
         if (supabaseClient) {
-            statusEl.innerHTML = "⏳ Purging Database...";
             try {
-                const { error } = await supabaseClient
-                    .from('equipment')
-                    .delete()
-                    .gt('id', 0); 
-
+                const { error } = await supabaseClient.from('equipment').delete().gt('id', 0);
                 if (error) throw error;
-                statusEl.innerHTML = "🧹 Databases Purged!";
-                statusEl.style.color = "var(--success)";
-                setTimeout(() => { statusEl.innerHTML = ""; }, 3000);
             } catch (err) {
-                alert("Cloud wipe failed: " + err.message);
+                alert("Clear dropped with error: " + err.message);
                 return;
             }
         }
-
         equipmentList = [];
         localStorage.removeItem('savedEquipment');
         renderTable();
-    }
-
-    function saveLocalCache() {
-        localStorage.setItem('savedEquipment', JSON.stringify(equipmentList));
     }
 
     function resetIntakeForm() {
@@ -439,25 +668,219 @@
 
     function getStatusStyles(status) {
         switch(status) {
-            case 'For Calibration':
-                return `background-color: var(--bg-calibration); color: var(--text-calibration);`;
-            case 'Done Calibration':
-                return `background-color: var(--bg-done-cal); color: var(--text-done-cal);`;
-            case 'For Repair':
-                return `background-color: var(--bg-repair); color: var(--text-repair);`;
-            case 'Done Repair':
-                return `background-color: var(--bg-done-rep); color: var(--text-done-rep);`;
-            default:
-                return `background-color: var(--border-color); color: var(--text-main);`;
+            case 'For Calibration': return `background-color: var(--bg-calibration); color: var(--text-calibration);`;
+            case 'Done Calibration': return `background-color: var(--bg-done-cal); color: var(--text-done-cal);`;
+            case 'For Repair': return `background-color: var(--bg-repair); color: var(--text-repair);`;
+            case 'Done Repair': return `background-color: var(--bg-done-rep); color: var(--text-done-rep);`;
+            default: return `background-color: var(--border-color); color: var(--text-main);`;
         }
     }
+
+    /* =========================================================================
+       RELATIONAL WORKFLOWS: EQUIPMENT HISTORY TABLE LOGIC INTERACTION
+       ========================================================================= */
+    
+    async function openHistoryModal(index) {
+        const item = equipmentList[index];
+        currentHistoryTargetEquipmentId = item.id;
+
+        document.getElementById('modalTargetTitle').innerText = `Service History Logs: ${item.name} (${item.brand} ${item.model})`;
+        
+        // Hide form if accessed from Home view; display if from Management view
+        const formBlock = document.getElementById('historyFormBlock');
+        if (currentViewMode === 'home') {
+            formBlock.style.display = 'none';
+        } else {
+            formBlock.style.display = 'block';
+        }
+
+        resetHistoryForm();
+        await fetchHistoryFromDatabase(); 
+        document.getElementById('historyModal').classList.add('open');
+    }
+
+    function closeHistoryModal() {
+        document.getElementById('historyModal').classList.remove('open');
+        currentHistoryTargetEquipmentId = null;
+        editingHistoryRowId = null;
+    }
+
+    async function fetchHistoryFromDatabase() {
+        const container = document.getElementById('historyEntriesContainer');
+        container.innerHTML = `<p style="text-align:center; font-size:13px; color:var(--text-muted);">⏳ Accessing history timeline data tracks...</p>`;
+
+        if (!supabaseClient) {
+            container.innerHTML = `<p style="text-align:center; color:var(--danger); font-size:13px;">⚠️ Offline Mode: Connect to Supabase to access database history logs.</p>`;
+            return;
+        }
+
+        try {
+            const { data, error } = await supabaseClient
+                .from('equipment_history')
+                .select('*')
+                .eq('equipment_id', currentHistoryTargetEquipmentId)
+                .order('date_damaged', { ascending: false });
+
+            if (error) throw error;
+            currentEquipmentHistory = data;
+            renderHistoryList();
+        } catch (err) {
+            container.innerHTML = `<p style="text-align:center; color:var(--danger); font-size:13px;">Error loading logs: ${err.message}</p>`;
+        }
+    }
+
+    function renderHistoryList() {
+        const container = document.getElementById('historyEntriesContainer');
+        container.innerHTML = "";
+        
+        if (currentEquipmentHistory.length === 0) {
+            container.innerHTML = `<p style="text-align:center; color:var(--text-muted); font-style:italic; font-size:13px; padding:16px;">No timeline logs added yet for this equipment unit.</p>`;
+            return;
+        }
+
+        currentEquipmentHistory.forEach((entry, idx) => {
+            const row = document.createElement('div');
+            row.className = "history-item";
+
+            // Only display action links (Edit/Delete) if structural path is accessed within Management panel
+            let rowActionsLayout = "";
+            if (currentViewMode !== 'home') {
+                rowActionsLayout = `
+                    <div class="history-item-actions">
+                        <button class="btn-hist-mini btn-hist-edit" onclick="startEditHistory(${idx})">Edit</button>
+                        <button class="btn-hist-mini btn-hist-delete" onclick="deleteHistoryEntry(${entry.id})">Delete</button>
+                    </div>
+                `;
+            }
+
+            row.innerHTML = `
+                <div style="font-weight:700; color:#1e3a8a; font-size:13px; margin-bottom: 4px; border-bottom:1px dashed #e5e7eb; padding-bottom:2px;">LOG ENTRY #${currentEquipmentHistory.length - idx}</div>
+                <div class="history-grid-output">
+                    <div><strong>Date Reported:</strong> ${entry.date_damaged || 'N/A'}</div>
+                    <div><strong>Date Repaired:</strong> ${entry.date_repaired || 'Active Log'}</div>
+                    <div><strong>Service Company:</strong> ${entry.service_company || 'N/A'}</div>
+                    <div><strong>Repaired By:</strong> ${entry.repaired_by || 'N/A'}</div>
+                    <div style="grid-column: span 2;"><strong>Status:</strong> <span style="background:#f3f4f6; padding:2px 6px; border-radius:4px; font-weight:600;">${entry.status || 'Pending'}</span></div>
+                    <div style="grid-column: span 2; margin-top:4px;"><strong>Damage Description:</strong><br><span style="color:#4b5563;">${entry.damage_description || 'None'}</span></div>
+                    <div style="grid-column: span 2; margin-top:4px;"><strong>Repair Details:</strong><br><span style="color:#4b5563;">${entry.repair_details || 'None'}</span></div>
+                </div>
+                ${rowActionsLayout}
+            `;
+            container.appendChild(row);
+        });
+    }
+
+    function startEditHistory(index) {
+        const entry = currentEquipmentHistory[index];
+        editingHistoryRowId = entry.id; 
+
+        document.getElementById('histDateDamaged').value = entry.date_damaged || "";
+        document.getElementById('histDateRepaired').value = entry.date_repaired || "";
+        document.getElementById('histDamageDesc').value = entry.damage_description || "";
+        document.getElementById('histRepairDetails').value = entry.repair_details || "";
+        document.getElementById('histServiceCompany').value = entry.service_company || "";
+        document.getElementById('histRepairedBy').value = entry.repaired_by || "";
+        document.getElementById('histStatus').value = entry.status || "Pending Repair";
+
+        document.getElementById('histFormTitle').innerText = "Modify Existing History Record Context";
+        document.getElementById('btnSaveHist').innerText = "Update Log Entry";
+        document.getElementById('btnCancelHistEdit').style.display = "inline-block";
+    }
+
+    function resetHistoryForm() {
+        editingHistoryRowId = null;
+        document.getElementById('histDateDamaged').value = new Date().toISOString().split('T')[0];
+        document.getElementById('histDateRepaired').value = "";
+        document.getElementById('histDamageDesc').value = "";
+        document.getElementById('histRepairDetails').value = "";
+        document.getElementById('histServiceCompany').value = "";
+        document.getElementById('histRepairedBy').value = "";
+        document.getElementById('histStatus').value = "Pending Repair";
+        
+        document.getElementById('histFormTitle').innerText = "Record Maintenance/Damage Incident";
+        document.getElementById('btnSaveHist').innerText = "Save Entry";
+        document.getElementById('btnCancelHistEdit').style.display = "none";
+    }
+
+    async function saveHistoryEntry() {
+        const date_damaged = document.getElementById('histDateDamaged').value;
+        const damage_description = document.getElementById('histDamageDesc').value.trim();
+        const repair_details = document.getElementById('histRepairDetails').value.trim();
+        const date_repaired = document.getElementById('histDateRepaired').value || null;
+        const service_company = document.getElementById('histServiceCompany').value.trim();
+        const repaired_by = document.getElementById('histRepairedBy').value.trim();
+        const status = document.getElementById('histStatus').value;
+
+        if (!date_damaged || !damage_description) {
+            alert("A baseline 'Date Damaged' and 'Damage Description' are required parameters.");
+            return;
+        }
+
+        const logRecordData = {
+            equipment_id: currentHistoryTargetEquipmentId,
+            date_damaged,
+            damage_description,
+            repair_details,
+            date_repaired,
+            service_company,
+            repaired_by,
+            status
+        };
+
+        const statusEl = document.getElementById('syncStatus');
+        statusEl.innerHTML = "⏳ Processing transaction log to database row...";
+
+        try {
+            if (editingHistoryRowId !== null) {
+                const { error } = await supabaseClient
+                    .from('equipment_history')
+                    .update(logRecordData)
+                    .eq('id', editingHistoryRowId);
+
+                if (error) throw error;
+                statusEl.innerHTML = "✅ Log line modified directly!";
+            } else {
+                const { error } = await supabaseClient
+                    .from('equipment_history')
+                    .insert([logRecordData]);
+
+                if (error) throw error;
+                statusEl.innerHTML = "✅ Log entry recorded successfully!";
+            }
+            statusEl.style.color = "var(--success)";
+            setTimeout(() => { statusEl.innerHTML = ""; }, 2000);
+            
+            resetHistoryForm();
+            await fetchHistoryFromDatabase();
+        } catch (err) {
+            alert("Failed to commit history logs to table: " + err.message);
+        }
+    }
+
+    async function deleteHistoryEntry(rowId) {
+        if (!confirm("Permanently erase this timeline transaction entry row from the database?")) return;
+        
+        try {
+            const { error } = await supabaseClient
+                .from('equipment_history')
+                .delete()
+                .eq('id', rowId);
+
+            if (error) throw error;
+            await fetchHistoryFromDatabase();
+        } catch (err) {
+            alert("Failed to drop database row line context: " + err.message);
+        }
+    }
+
+    /* ========================================================================= */
 
     function renderTable() {
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = "";
 
         if (equipmentList.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 32px; color: var(--text-muted); font-style: italic;">No workflow instances queued in engine context.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 32px; color: var(--text-muted); font-style: italic;">No equipment records loaded.</td></tr>`;
             return;
         }
 
@@ -470,7 +893,7 @@
         }
 
         if (itemsToDisplay.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 32px; color: var(--text-muted); font-style: italic;">No items found matching this filter criteria.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 32px; color: var(--text-muted); font-style: italic;">No items found matching filter criteria.</td></tr>`;
             return;
         }
 
@@ -481,6 +904,17 @@
             const statusStyle = getStatusStyles(item.service);
             const originalIndex = equipmentList.findIndex(x => x.sn === item.sn && x.id === item.id);
 
+            let actionButtonsLayout = "";
+            if (currentViewMode === 'home') {
+                actionButtonsLayout = `<button class="btn-action-history" onclick="openHistoryModal(${originalIndex})">👁️ History</button>`;
+            } else {
+                actionButtonsLayout = `
+                    <button class="btn-action-history" style="background-color:#f5f5f5; color:#4b5563; border-color:#d1d5db;" onclick="openHistoryModal(${originalIndex})">✏️ Logs</button>
+                    <button class="btn-action-edit" onclick="startEdit(${originalIndex})">Edit</button>
+                    <button class="btn-action-delete" onclick="removeItem(${originalIndex})">Delete</button>
+                `;
+            }
+
             row.innerHTML = `
                 <td style="color: var(--text-muted); font-weight: 500;">${index + 1}</td>
                 <td><span style="font-weight: 600; color: var(--text-main);">${item.name}</span></td>
@@ -489,10 +923,7 @@
                 <td>${item.loc}</td>
                 <td><code style="font-family: monospace; background: var(--bg-color); padding: 3px 6px; border-radius: 4px; font-size: 13px;">${item.sn}</code></td>
                 <td><span class="status-badge" style="${statusStyle}">${item.service || ''}</span></td>
-                <td class="action-cell">
-                    <button class="btn-action-edit" onclick="startEdit(${originalIndex})">Edit</button>
-                    <button class="btn-action-delete" onclick="removeItem(${originalIndex})">Delete</button>
-                </td>
+                <td class="action-cell">${actionButtonsLayout}</td>
             `;
             tbody.appendChild(row);
         });
@@ -503,8 +934,8 @@
         const localData = localStorage.getItem('savedEquipment');
         if (localData) {
             equipmentList = JSON.parse(localData);
-            renderTable();
         }
+        navigateTo('home');
         initializeSupabase();
     };
 
